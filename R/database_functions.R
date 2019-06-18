@@ -1,18 +1,8 @@
-# Hello, world!
-#
-# This is an example function named 'hello'
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   http://r-pkgs.had.co.nz/
-#
 # Some useful keyboard shortcuts for package authoring:
 #
 #   Install Package:           'Ctrl + Shift + B'
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
-
 
 #' Connect to UWIN database
 #'
@@ -21,12 +11,11 @@
 #' a connection is attempted.
 #'
 #' @return If the password is correctly input \code{connect2db} will return
-#' a \code{MariaDBConnection} called \code{uwidb.}
+#' a \code{MariaDBConnection} called \code{uwidb.} to the global environment.
 #'
 #' @importFrom rstudioapi askForPassword
 #'
-#' @example
-#'
+#' @examples
 #' \dontrun{
 #' connect2db()
 #' }
@@ -42,7 +31,7 @@ connect2db <- function(){
 
 #' Apply a select query to the UWIN database.
 #'
-#' \code{SELECT} will send SELECT queries to the UWIN database and return
+#' \code{SELECT} will send select SQL queries to the UWIN database and return
 #' the output.
 #'
 #' @param sql A SQL statement input as a character vector to be sent to the
@@ -53,14 +42,12 @@ connect2db <- function(){
 #' @return A data.frame with the output from the SQL statement.
 
 #'
-#' @example
-#'
+#' @examples
 #' \dontrun{
-#' my_sql <- 'SELECT * FROM Visits'
+#' my_sql <- 'SELECT * FROM Visits;'
 #' SELECT(my_sql)
 #' }
 
-# helper functions
 SELECT <- function(sql = NULL, db = uwidb){
   if(!is.character(sql)){
     stop('sql must be a character object')
@@ -77,8 +64,29 @@ SELECT <- function(sql = NULL, db = uwidb){
   return(result)
 }
 
-update_qry <- function(sql = NULL, report = FALSE, db = uwidb){
-  qry <- RMariaDB::dbSendStatement(uwidb, sql)
+#' Modify the records in the UWIN database.
+#'
+#' \code{MODIFY} can be used, for example, to update or delete records in the
+#'   UWIN database.
+#'
+#' @param sql A SQL statement input as a character vector to be sent to the
+#'   UWIN database.
+#'
+#' @param report Logical. Whether or not to report the number of rows
+#'   affected. Defaults to \code{FALSE}.
+#'
+#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#'
+#'
+#'
+MODIFY <- function(sql = NULL, report = FALSE, db = uwidb){
+  if(!is.character(sql)){
+    stop('sql must be a character object')
+  }
+  if(class(db) != 'MariaDBConnection'){
+    stop('db is not the correct class, please connect to database with connect2db().')
+  }
+  qry <- dbSendStatement(uwidb, sql)
   if(report){
     to_report <- dbGetRowsAffected(qry)
     dbClearResult(qry)
