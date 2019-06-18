@@ -21,7 +21,7 @@ the output.
 }
 \examples{
 \dontrun{
-my_sql <- 'SELECT * FROM Visits'
+my_sql <- 'SELECT * FROM Visits;'
 SELECT(my_sql)
 }
 }

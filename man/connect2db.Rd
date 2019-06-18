@@ -8,7 +8,7 @@ connect2db()
 }
 \value{
 If the password is correctly input \code{connect2db} will return
-a \code{MariaDBConnection} called \code{uwidb.}
+a \code{MariaDBConnection} called \code{uwidb.} to the global environment.
 }
 \description{
 \code{connect2db} connects to the UWIN camera trapping database. It takes
