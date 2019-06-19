@@ -1,11 +1,12 @@
 Package: uwinutils
 Type: Package
-Title: What the Package Does (Title Case)
+Title: A suite of useful functions to query / report from the UWIN database
 Version: 0.1.0
 Author: Mason Fidino
 Maintainer: Mason Fidino <mfidino@lpzoo.org>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: This is really only helpful to the handful of folks who have access
+    to the backend of the UWIN database. However, it will hopefully make automated
+    reporting much easier.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
