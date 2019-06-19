@@ -1,4 +1,33 @@
-
+#' Images of a species at a given study area
+#'
+#' \code{images_of} queries the UWIN database for a selected species and
+#'   study area.
+#'
+#' @param species A character vector of the species to be queried. If left as
+#'   \code{NULL} then you can select the species you want in a pop up list.
+#'   Multiple species can be selected by holding CTRL when clicking on them.
+#'
+#' @param studyArea The four letter capitalized study area abbreviation for a
+#'   city. If left as \code{NULL} you can select the study area from a pop up
+#'   list. Only one study area may be selected at a time.
+#'
+#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#'
+#' @return a data.frame with the following columns:
+#' - filepath: the location of the image on google cloud
+#' - locationName: the site name the image was taken
+#' - photoName: the name of the image
+#' - commonName: the species tagged in the images
+#' - numIndividuals: The number of individuals of the tagged species
+#'
+#' @importFrom rstudioapi askForPassword
+#' @importFrom utils select.list
+#' @importFrom dplyr distinct
+#'
+#' @examples
+#' \dontrun{
+#' my_images <- images_of()
+#' }
 images_of <- function(species = NULL,
                       studyArea = NULL,
                       db = uwidb){
@@ -51,49 +80,12 @@ images_of <- function(species = NULL,
     'WHERE de.valStatID = 2\n',
     'AND ds.speciesID IN(', paste(tmp_species$speciesID, collapse = ", "), ")\n",
     'AND ph.areaID =', as.numeric(studyArea), "\n",
-    'ORDER BY sp.commonName, ph.photoName;'
+    'ORDER BY ph.photoName;'
   )
   to_return <- SELECT(tmp_sql)
   # drop all images that are not stored on google drive
   to_return <- to_return[grep("^gs://urban-wildlife", to_return$filepath),]
   return(dplyr::distinct(to_return))
-}
-
-gsutil_copy <- function(images_to_copy = NULL,
-                        output_folder = NULL,
-                        ncore = 2){
-  # add a wildlcard on the filepath to look in the archive as well
-  images_to_copy$filepath <- gsub('(urban-wildlife-\\w+)/',
-                                  '\\1*/',
-                                  images_to_copy$filepath)
-
-  # create folder if it does not exist
-  if(!file.exists(output_folder)){
-    dir.create(output_folder)
-  }
-  cl <- makeCluster(ncore)
-  registerDoSNOW(cl)
-  cat('Copying images to', output_folder)
-  pb <- progress_bar$new(
-    format = "Images complete [:bar] :elapsed | eta: :eta",
-    total = nrow(images_to_copy),
-    width = 60
-  )
-  progress <- function(n){
-    pb$tick()
-  }
-  opts <- list(progress = progress)
-
-  foreach(i = 1:nrow(images_to_copy), .options.snow = opts) %dopar% {
-    system(paste('gsutil cp',images_to_copy$filepath[i], output_folder))
-  }
-  stopCluster(cl)
-  # prepare the csv to go along with those images
-  to_save <- images_to_copy[,-grep('filepath', colnames(images_to_copy))]
-  to_save$updateCommonName <- ""
-  to_save$updateNumIndividuals <- ""
-  write.csv(to_save, paste0(output_folder,"/detections_to_update_",Sys.Date(),".csv"))
-  cat('Images and detection data copied to', output_folder)
 }
 
 

@@ -13,7 +13,8 @@ Depends: R (>= 3.5.3),
   magrittr,
   RMariaDB,
   doSNOW,
-  progress
+  progress,
+  foreach
 Imports:
   dplyr,
   rstudioapi
