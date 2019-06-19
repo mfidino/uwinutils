@@ -35,7 +35,7 @@ library(uwinutils)
 connect2db()
 ```
 
-## Pull images of a specific species
+## Copy images of a specific species
 
 ```R
 # connect to the database
