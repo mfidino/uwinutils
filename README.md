@@ -19,6 +19,9 @@ option to open up the shell aand configure it. This will require you to sign in
 under the account that has access to the google cloud backend. When opted to select
 a default region, enter 'Y' and input '7', which is us-central.
 
+## Installing the package
+
+`devtools::install_github('mfidino/uwinutils')`
 
 ## Connect to the database
 
