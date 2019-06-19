@@ -32,3 +32,19 @@ library(uwinutils)
 connect2db()
 ```
 
+## Pull images of a specific species
+
+```R
+# connect to the database
+connect2db()
+
+# query the images from the database
+my_images <- images_of()
+
+# copy them to a specific folder
+gsutil_copy(images_to_copy = my_images,
+            output_folder = "C:/Users/mfidino/Desktop/ATGAreport")
+
+```
+
+
