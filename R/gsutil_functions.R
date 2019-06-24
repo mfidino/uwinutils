@@ -21,6 +21,12 @@
 gsutil_copy <- function(images_to_copy = NULL,
                         output_folder = NULL,
                         ncore = 2){
+  # Check to see if google-cloud-sdk is in path variable
+  if(length(grep('google-cloud-sdk', Sys.getenv('PATH'))) != 1 ){
+    stop('google-cloud-sdk is not in your PATH environment variable.',
+         '\nTo add it, see readME on www.github.com/mfidino/uwinutils')
+  }
+
   # add a wildlcard on the filepath to look in the archive as well
   images_to_copy$filepath <- gsub('(urban-wildlife-\\w+)/',
                                   '\\1*/',
