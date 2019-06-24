@@ -19,6 +19,7 @@
 #' \dontrun{
 #' connect2db()
 #' }
+#' @export
 connect2db <- function(){
   uwidb <- dbConnect(MariaDB(),
             user = 'root',
@@ -47,7 +48,7 @@ connect2db <- function(){
 #' my_sql <- 'SELECT * FROM Visits;'
 #' SELECT(my_sql)
 #' }
-
+#' @export
 SELECT <- function(sql = NULL, db = uwidb){
   if(!is.character(sql)){
     stop('sql must be a character object')
@@ -78,7 +79,7 @@ SELECT <- function(sql = NULL, db = uwidb){
 #' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
 #'
 #'
-#'
+#'@export
 MODIFY <- function(sql = NULL, report = FALSE, db = uwidb){
   if(!is.character(sql)){
     stop('sql must be a character object')

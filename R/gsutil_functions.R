@@ -17,7 +17,7 @@
 #' @importFrom foreach foreach
 #' @importFrom progress progress_bar
 #'
-#'
+#'@export
 gsutil_copy <- function(images_to_copy = NULL,
                         output_folder = NULL,
                         ncore = 2){

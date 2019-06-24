@@ -28,6 +28,7 @@
 #' \dontrun{
 #' my_images <- images_of()
 #' }
+#' @export
 images_of <- function(species = NULL,
                       studyArea = NULL,
                       db = uwidb){
