@@ -10,7 +10,7 @@ Description: This is really only helpful to the handful of folks who have access
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.5.3),
+Depends: R (>= 3.5.1),
   magrittr,
   RMariaDB,
   doSNOW,
