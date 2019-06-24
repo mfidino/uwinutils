@@ -35,6 +35,41 @@ library(uwinutils)
 connect2db()
 ```
 
+## Ensure that `gsutil` can be called from R
+
+At times there may be issues with connecting to `gsutil` via `system` calls in `R`, which occurs when google-cloud-sdk is not in the `PATH` variable. You can see if this occurs by running this in the `R` console:
+
+`system(gsutil --help)`
+
+If it returns the value `127` then `R` cannot find `gsutil`. To add it to your PATH variable you need to locate where it is on your computer. Open up the command line on your computer and run the following code for...
+
+for a PC:
+`where gsutil`
+
+for a mac:
+`which gsutil`
+ 
+On my PC, this returns:
+`C:\Users\mfidino\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gsutil.cmd`
+
+The important part of this path is the folder hierarchy, from the beginning to where is says `bin` at the end. We need to add that to the `PATH` variable in `R`. To do so, run the following code in `R`, but modifying the additional path with where gsutil is located on your computer:
+
+```
+# What I would put on my PC to connect to gsutil from R
+Sys.setenv(
+  PATH = paste(
+    Sys.getenv("PATH"), 
+    "C:\\Users\\mfidino\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin", # CHANGE THIS LINE 
+    sep = ";"
+  )
+)
+```
+
+Following this, restart `R` and then check to see if you can call `gsutil` again.
+
+`system(gsutil --help)`
+
+
 ## Copy images of a specific species
 
 ```R
