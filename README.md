@@ -39,7 +39,7 @@ connect2db()
 
 At times there may be issues with connecting to `gsutil` via `system` calls in `R`, which occurs when google-cloud-sdk is not in the `PATH` variable. You can see if this occurs by running this in the `R` console:
 
-`system(gsutil --help)`
+`system('gsutil --help')`
 
 If it returns the value `127` then `R` cannot find `gsutil`. To add it to your PATH variable you need to locate where it is on your computer. Open up the command line on your computer and run the following code for...
 
@@ -67,7 +67,7 @@ Sys.setenv(
 
 Following this, restart `R` and then check to see if you can call `gsutil` again.
 
-`system(gsutil --help)`
+`system('gsutil --help')`
 
 
 ## Copy images of a specific species
