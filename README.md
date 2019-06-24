@@ -47,7 +47,7 @@ for a PC:
 `where gsutil`
 
 for a mac:
-`which gsutil`
+`which -a gsutil`
  
 On my PC, this returns:
 `C:\Users\mfidino\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gsutil.cmd`
