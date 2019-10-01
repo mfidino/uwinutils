@@ -20,6 +20,7 @@
 #' - commonName: the species tagged in the images
 #' - numIndividuals: The number of individuals of the tagged species
 #'
+#'
 #' @importFrom rstudioapi askForPassword
 #' @importFrom utils select.list
 #' @importFrom dplyr distinct
@@ -101,25 +102,66 @@ images_of <- function(species = NULL,
 #'
 #' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
 #'
-#' @return a data.frame with the following columns:
-#' - filepath: the location of the image on google cloud
-#' - locationName: the site name the image was taken
-#' - photoName: the name of the image
-#' - commonName: the species tagged in the images
-#' - numIndividuals: The number of individuals of the tagged species
+#' @return a list with the following elements:\cr\cr
+#'  - \code{assignedIncomplete} (data.frame): This is a report on photo groups
+#'      that have been assigned but have yet to be finished.
+#'      The columns in \code{assingedIncomplete} are:
+#'      \itemize{
+#'        \item User: The name of the person who has photo groups to classify.
+#'        \item email: The users email.
+#'        \item yearMonth: The year and month of visits in the database that have photos.r
+#'        \item countAssignedIncomplete: The number of photo groups assigned to a user
+#'        per yearMonth that have not been completed.
+#'        }
+#'  - \code{fullComplete} (data.frame): This is a progress report on the images that have been
+#'      classified as 'complete' in the cloud database, which depends on how many
+#'      users are necessary to consider an image 'complete' (either one or two,
+#'      depending on a study area). The columns in \code{fullComplete} are:
+#'      \itemize{
+#'      \item yearMonth: The year and month of visits in the database that have photos.
+#'      \item percentComplete: The percent of images in a yearMonth that
+#'        are considered 100% complete (i.e., double validated).
+#'      \item TotalPhotos: The number of photos tied to a yearMonth.
+#'      \item NotAssigned: Photos in a yearMonth that have not been assigned
+#'        to a user to tag.
+#'      \item ToValidate: The number of photos that need to go through Validation
+#'        per yearMonth. The Valdidation is on the UWIN cloud db.
+#'      }
+#'  - \code{pendingComplete} (data.frame): This is a progress report on the images that have
+#'      been tagged by at least one user on the cloud db, which could be used
+#'      to generate an occupancy query (assuming that 1 viewer is okay).
+#'      The columns in \code{pendingComplete} are:
+#'      \itemize{
+#'      \item yearMonth: The year and month of visits in the database that have photos.
+#'      \item percentComplete: The percent of images in a yearMonth that
+#'        have been tagged at least once.
+#'      \item TotalPhotos: The number of photos tied to a yearMonth.
+#'      \item NotAssigned: Photos in a yearMonth that have not been assigned
+#'        to a user to tag.
+#'      }
 #'
-#' @importFrom dplyr distinct, group_by, arrange, desc, summarise, left_join
-#' @importFrom lubridate month, year
+#' @importFrom utils select.list
+#' @importFrom dplyr distinct group_by  arrange  desc  summarise  left_join
+#' @importFrom lubridate month  year
 #'
 #' @examples
 #' \dontrun{
 #' my_images <- progress_of("CHIL")
 #' }
 #' @export
+#'
 progress_of <- function(
-  studyArea,
+  studyArea = NULL,
   db = uwidb
 ){
+  # allow for selection if left null
+  if(is.null(studyArea)){
+  studyArea_df <- SELECT('SELECT areaAbbr, areaName FROM StudyAreas ORDER BY areaName;')
+  studyArea <- select.list( as.character(studyArea_df$areaName), graphics = TRUE,
+                            title = 'Select one study area:')
+  studyArea <- studyArea_df$areaAbbr[which(studyArea_df$areaName == studyArea)]
+  }
+
   my_cols <- paste(
     "cl.fullName AS siteName",
     "Date(vi.visitDateTime) AS visitDate",
