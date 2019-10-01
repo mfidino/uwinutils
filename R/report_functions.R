@@ -90,3 +90,166 @@ images_of <- function(species = NULL,
 }
 
 
+#' The progress made for each season's worth of data
+#'
+#' \code{progress_of} queries the UWIN database for a selected study area.
+#'
+#'
+#' @param studyArea The four letter capitalized study area abbreviation for a
+#'   city. If left as \code{NULL} you can select the study area from a pop up
+#'   list. Only one study area may be selected at a time.
+#'
+#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#'
+#' @return a data.frame with the following columns:
+#' - filepath: the location of the image on google cloud
+#' - locationName: the site name the image was taken
+#' - photoName: the name of the image
+#' - commonName: the species tagged in the images
+#' - numIndividuals: The number of individuals of the tagged species
+#'
+#' @importFrom dplyr distinct, group_by, arrange, desc, summarise, left_join
+#' @importFrom lubridate month, year
+#'
+#' @examples
+#' \dontrun{
+#' my_images <- progress_of("CHIL")
+#' }
+#' @export
+progress_of <- function(
+  studyArea,
+  db = uwidb
+){
+  my_cols <- paste(
+    "cl.fullName AS siteName",
+    "Date(vi.visitDateTime) AS visitDate",
+    "Concat(Users.firstName, ' ', Users.lastName) AS User",
+    "Users.email",
+    "apg.tagIndex > 0 AS started",
+    "Count(ph.photoName) AS photosInGroup",
+    sep = ",\n")
+
+  # this is a query to see what photo groups have been assinged
+  #  but have not been finished.
+  tmp_qry <- paste0(
+    "SELECT DISTINCT\n", my_cols, " FROM Visits vi\n",
+    "INNER JOIN Photos ph ON vi.visitID = ph.visitID\n",
+    "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
+    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN AssignedPhotoGroup apg on pg.photoGroupID = apg.photoGroupID\n",
+    "LEFT JOIN Users ON Users.userID = apg.userID\n",
+    "LEFT JOIN StudyAreas sa ON cl.areaID = sa.areaID\n",
+    "WHERE sa.AreaAbbr = '", studyArea, "'\n",
+    "AND pg.completed = 0\n",
+    "AND apg.completed = 0\n",
+    "GROUP BY pg.photoGroupID, vi.visitID, Users.userID, apg.completed, apg.tagIndex"
+  )
+
+  # grab the data
+  q1 <- SELECT(tmp_qry)
+  # convert started to yes / no
+  q1$started <- ifelse(is.na(q1$started), "No", "Yes")
+
+  q1$yearMonth <- paste(
+    lubridate::year(
+      q1$visitDate
+    ),
+    lubridate::month(
+      q1$visitDate
+    ),
+    sep = "-"
+  )
+
+
+  # second, the count of users that have groups to complete
+  q2 <- q1 %>% dplyr::group_by(User, email, yearMonth) %>%
+          dplyr::summarise(countAssignedIncomplete = length(User)) %>%
+          dplyr::arrange(yearMonth)
+
+  # reorder q1 and drop the email
+  q1 <- q1[
+    order(q1$visitDate),
+    -which(colnames(q1) == "email")
+  ]
+
+  rm(my_cols)
+  rm(tmp_qry)
+  # Next thing is to check progress of all photos by month
+
+  my_cols <- paste(
+    "cl.fullName AS siteName",
+    "Date(vi.visitDateTime) AS visitDate",
+    "ph.photoName",
+    "de.detectionID",
+    "pg.completed",
+    "de.valStatID",
+    sep = ",\n")
+
+  tmp_qry <- paste0(
+    "SELECT ", my_cols, " FROM Photos ph\n",
+    "LEFT JOIN Detections de ON de.photoName = ph.photoName\n",
+    "LEFT JOIN Visits vi on vi.visitID = ph.visitID\n",
+    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
+    "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
+    "WHERE sa.AreaAbbr = '", studyArea, "';"
+  )
+
+ q3 <- SELECT(tmp_qry)
+  if(any(q3$valStatID == 3)){
+    q3 <- q3[-which(q3$valStatID == 3),]
+  }
+q3$yearMonth <- paste(
+  lubridate::year(
+    q3$visitDate
+  ),
+  lubridate::month(
+    q3$visitDate
+  ),
+  sep = "-"
+)
+
+ q_fullcomplete <- q3 %>% dplyr::group_by(yearMonth) %>%
+   dplyr::summarise(percentcomplete = sum(
+     completed, na.rm = TRUE) / length(completed),
+     TotalPhotos = length(unique(photoName)),
+     NotAssigned = sum(is.na(detectionID))
+     ) %>%
+   dplyr::arrange(yearMonth)
+
+
+ if(any(q3$completed == 1 & q3$valStatID ==1)){
+   to_validate <- q3[which(q3$completed == 1 & q3$valStatID ==1),] %>%
+     dplyr::group_by(yearMonth) %>%
+     dplyr::summarise(ToValidate = length(completed))
+
+   q_fullcomplete <- dplyr::left_join(
+     q_fullcomplete,
+     to_validate,
+     by = "yearMonth"
+   )
+ }
+
+
+ one_check <- q3[-which(duplicated(q3$photoName)),]
+ one_check <- one_check %>% dplyr::group_by(yearMonth) %>%
+   dplyr::summarise(
+     percentComplete = sum(
+       valStatID %in% c(1,2), na.rm = TRUE
+       ) / length(valStatID),
+     TotalPhotos = length(valStatID),
+     NotAssigned = sum(is.na(detectionID))
+   )
+
+
+ to_return <- list(
+   assignedIncomplete = q2,
+   fullComplete = q_fullcomplete,
+   pendingComplete = one_check
+
+  )
+ return(to_return)
+
+  }
+
+
