@@ -238,8 +238,8 @@ progress_of <- function(
   )
 
  q3 <- SELECT(tmp_qry)
-  if(any(q3$valStatID == 3)){
-    q3 <- q3[-which(q3$valStatID == 3),]
+  if(any(q3$valStatID == 3, na.rm = TRUE)){
+    q3 <- q3[-which(q3$valStatID == 3, na.rm = TRUE),]
   }
 q3$yearMonth <- paste(
   lubridate::year(
