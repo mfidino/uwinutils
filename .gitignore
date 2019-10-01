@@ -37,3 +37,5 @@ rsconnect/
 
 # ignore pdf folder that gets spun up
 .Rd2pdf*
+
+/data/*

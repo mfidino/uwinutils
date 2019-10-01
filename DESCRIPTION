@@ -18,5 +18,6 @@ Depends: R (>= 3.5.1),
   foreach
 Imports:
   dplyr,
-  rstudioapi
+  rstudioapi,
+  lubridate
 RoxygenNote: 6.1.1

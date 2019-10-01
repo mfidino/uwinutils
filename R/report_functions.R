@@ -20,6 +20,7 @@
 #' - commonName: the species tagged in the images
 #' - numIndividuals: The number of individuals of the tagged species
 #'
+#'
 #' @importFrom rstudioapi askForPassword
 #' @importFrom utils select.list
 #' @importFrom dplyr distinct
@@ -88,5 +89,209 @@ images_of <- function(species = NULL,
   to_return <- to_return[grep("^gs://urban-wildlife", to_return$filepath),]
   return(dplyr::distinct(to_return))
 }
+
+
+#' The progress made for each season's worth of data
+#'
+#' \code{progress_of} queries the UWIN database for a selected study area.
+#'
+#'
+#' @param studyArea The four letter capitalized study area abbreviation for a
+#'   city. If left as \code{NULL} you can select the study area from a pop up
+#'   list. Only one study area may be selected at a time.
+#'
+#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#'
+#' @return a list with the following elements:\cr\cr
+#'  - \code{assignedIncomplete} (data.frame): This is a report on photo groups
+#'      that have been assigned but have yet to be finished.
+#'      The columns in \code{assingedIncomplete} are:
+#'      \itemize{
+#'        \item User: The name of the person who has photo groups to classify.
+#'        \item email: The users email.
+#'        \item yearMonth: The year and month of visits in the database that have photos.r
+#'        \item countAssignedIncomplete: The number of photo groups assigned to a user
+#'        per yearMonth that have not been completed.
+#'        }
+#'  - \code{fullComplete} (data.frame): This is a progress report on the images that have been
+#'      classified as 'complete' in the cloud database, which depends on how many
+#'      users are necessary to consider an image 'complete' (either one or two,
+#'      depending on a study area). The columns in \code{fullComplete} are:
+#'      \itemize{
+#'      \item yearMonth: The year and month of visits in the database that have photos.
+#'      \item percentComplete: The percent of images in a yearMonth that
+#'        are considered 100% complete (i.e., double validated).
+#'      \item TotalPhotos: The number of photos tied to a yearMonth.
+#'      \item NotAssigned: Photos in a yearMonth that have not been assigned
+#'        to a user to tag.
+#'      \item ToValidate: The number of photos that need to go through Validation
+#'        per yearMonth. The Valdidation is on the UWIN cloud db.
+#'      }
+#'  - \code{pendingComplete} (data.frame): This is a progress report on the images that have
+#'      been tagged by at least one user on the cloud db, which could be used
+#'      to generate an occupancy query (assuming that 1 viewer is okay).
+#'      The columns in \code{pendingComplete} are:
+#'      \itemize{
+#'      \item yearMonth: The year and month of visits in the database that have photos.
+#'      \item percentComplete: The percent of images in a yearMonth that
+#'        have been tagged at least once.
+#'      \item TotalPhotos: The number of photos tied to a yearMonth.
+#'      \item NotAssigned: Photos in a yearMonth that have not been assigned
+#'        to a user to tag.
+#'      }
+#'
+#' @importFrom utils select.list
+#' @importFrom dplyr distinct group_by  arrange  desc  summarise  left_join
+#' @importFrom lubridate month  year
+#'
+#' @examples
+#' \dontrun{
+#' my_images <- progress_of("CHIL")
+#' }
+#' @export
+#'
+progress_of <- function(
+  studyArea = NULL,
+  db = uwidb
+){
+  # allow for selection if left null
+  if(is.null(studyArea)){
+  studyArea_df <- SELECT('SELECT areaAbbr, areaName FROM StudyAreas ORDER BY areaName;')
+  studyArea <- select.list( as.character(studyArea_df$areaName), graphics = TRUE,
+                            title = 'Select one study area:')
+  studyArea <- studyArea_df$areaAbbr[which(studyArea_df$areaName == studyArea)]
+  }
+
+  my_cols <- paste(
+    "cl.fullName AS siteName",
+    "Date(vi.visitDateTime) AS visitDate",
+    "Concat(Users.firstName, ' ', Users.lastName) AS User",
+    "Users.email",
+    "apg.tagIndex > 0 AS started",
+    "Count(ph.photoName) AS photosInGroup",
+    sep = ",\n")
+
+  # this is a query to see what photo groups have been assinged
+  #  but have not been finished.
+  tmp_qry <- paste0(
+    "SELECT DISTINCT\n", my_cols, " FROM Visits vi\n",
+    "INNER JOIN Photos ph ON vi.visitID = ph.visitID\n",
+    "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
+    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN AssignedPhotoGroup apg on pg.photoGroupID = apg.photoGroupID\n",
+    "LEFT JOIN Users ON Users.userID = apg.userID\n",
+    "LEFT JOIN StudyAreas sa ON cl.areaID = sa.areaID\n",
+    "WHERE sa.AreaAbbr = '", studyArea, "'\n",
+    "AND pg.completed = 0\n",
+    "AND apg.completed = 0\n",
+    "GROUP BY pg.photoGroupID, vi.visitID, Users.userID, apg.completed, apg.tagIndex"
+  )
+
+  # grab the data
+  q1 <- SELECT(tmp_qry)
+  # convert started to yes / no
+  q1$started <- ifelse(is.na(q1$started), "No", "Yes")
+
+  q1$yearMonth <- paste(
+    lubridate::year(
+      q1$visitDate
+    ),
+    lubridate::month(
+      q1$visitDate
+    ),
+    sep = "-"
+  )
+
+
+  # second, the count of users that have groups to complete
+  q2 <- q1 %>% dplyr::group_by(User, email, yearMonth) %>%
+          dplyr::summarise(countAssignedIncomplete = length(User)) %>%
+          dplyr::arrange(yearMonth)
+
+  # reorder q1 and drop the email
+  q1 <- q1[
+    order(q1$visitDate),
+    -which(colnames(q1) == "email")
+  ]
+
+  rm(my_cols)
+  rm(tmp_qry)
+  # Next thing is to check progress of all photos by month
+
+  my_cols <- paste(
+    "cl.fullName AS siteName",
+    "Date(vi.visitDateTime) AS visitDate",
+    "ph.photoName",
+    "de.detectionID",
+    "pg.completed",
+    "de.valStatID",
+    sep = ",\n")
+
+  tmp_qry <- paste0(
+    "SELECT ", my_cols, " FROM Photos ph\n",
+    "LEFT JOIN Detections de ON de.photoName = ph.photoName\n",
+    "LEFT JOIN Visits vi on vi.visitID = ph.visitID\n",
+    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
+    "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
+    "WHERE sa.AreaAbbr = '", studyArea, "';"
+  )
+
+ q3 <- SELECT(tmp_qry)
+  if(any(q3$valStatID == 3)){
+    q3 <- q3[-which(q3$valStatID == 3),]
+  }
+q3$yearMonth <- paste(
+  lubridate::year(
+    q3$visitDate
+  ),
+  lubridate::month(
+    q3$visitDate
+  ),
+  sep = "-"
+)
+
+ q_fullcomplete <- q3 %>% dplyr::group_by(yearMonth) %>%
+   dplyr::summarise(percentcomplete = sum(
+     completed, na.rm = TRUE) / length(completed),
+     TotalPhotos = length(unique(photoName)),
+     NotAssigned = sum(is.na(detectionID))
+     ) %>%
+   dplyr::arrange(yearMonth)
+
+
+ if(any(q3$completed == 1 & q3$valStatID ==1)){
+   to_validate <- q3[which(q3$completed == 1 & q3$valStatID ==1),] %>%
+     dplyr::group_by(yearMonth) %>%
+     dplyr::summarise(ToValidate = length(completed))
+
+   q_fullcomplete <- dplyr::left_join(
+     q_fullcomplete,
+     to_validate,
+     by = "yearMonth"
+   )
+ }
+
+
+ one_check <- q3[-which(duplicated(q3$photoName)),]
+ one_check <- one_check %>% dplyr::group_by(yearMonth) %>%
+   dplyr::summarise(
+     percentComplete = sum(
+       valStatID %in% c(1,2), na.rm = TRUE
+       ) / length(valStatID),
+     TotalPhotos = length(valStatID),
+     NotAssigned = sum(is.na(detectionID))
+   )
+
+
+ to_return <- list(
+   assignedIncomplete = q2,
+   fullComplete = q_fullcomplete,
+   pendingComplete = one_check
+
+  )
+ return(to_return)
+
+  }
 
 

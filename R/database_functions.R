@@ -23,11 +23,18 @@
 connect2db <- function(){
   uwidb <- dbConnect(MariaDB(),
             user = 'root',
-            password = rstudioapi::askForPassword(prompt = 'Input UWIDB password'),
+            password = rstudioapi::askForPassword(
+              prompt = 'Input UWIDB password'
+            ),
             host = '35.188.69.174',
             port = 3306,
-            dbname = 'UWIDB')
-  assign('uwidb', uwidb, envir = globalenv())
+            dbname = 'UWIDB'
+          )
+  assign(
+    'uwidb',
+    uwidb,
+    envir = globalenv()
+  )
 }
 
 #' Apply a select query to the UWIN database.
