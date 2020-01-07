@@ -15,7 +15,7 @@ source("connect_to_uwidb.R")
   cat
 
 
-query <- "SELECT Detections.*, DetectionSpecies.speciesID,
+tmp_qry <- "SELECT Detections.*, DetectionSpecies.speciesID,
 DetectionSpecies.detailID, DetectionSpecies.numIndividuals,
 Photos.photoGroupID, Photos.highlighted, PhotoGroup.completed,
 apg.completed AS apg_complete, apg.tagIndex
@@ -28,25 +28,9 @@ LEFT JOIN AssignedPhotoGroup apg ON apg.photoGroupID = PhotoGroup.photoGroupID
 WHERE Detections.valStatID = 1
 AND PhotoGroup.completed = 1;"
 
-qry_send <- dbSendQuery(uwidb, query)
-results <- dbFetch(qry_send)
-dbClearResult(qry_send)
-
-
-
-
+results <- SELECT(tmp_qry)
 
 results <- results[-which(duplicated(results)),]
-
-tmper <- results[,c("valStatID", "photoName", "userID", "speciesID", "detailID", "numIndividuals")]
-
-tmper[duplicated(tmper),]
-
-results[which(results$photoName == "VID573-00010.jpg"),]
-
-orrr <- results
-
-to_go <- results$detectionID[duplicated(tmper)]
 
 # get only tags that have photos with > 2 users
 photos_two_taggers <- results %>% group_by(photoName) %>%
@@ -74,49 +58,20 @@ my_phooots <- results[which(results$photoName %in% photos_to_correct$photoName),
 
 my_groups <- sort(unique(my_phooots$photoGroupID))
 
+for(i in 1:length(my_groups)){
 
-write.csv(my_groups, "Joes_groupies2.csv",
-          row.names = FALSE, col.names = FALSE, quote = FALSE)
-# to correct
-photos_to_correct <- tag_summary[tag_summary$unq_tags == 1,]
-if(nrow(photos_to_correct) > 0){
-  "\n\tvalStatID needs to be updated for some images.\n\n" %>%
-    bold %>%
-    red %>%
-    cat
-  if(auto_run_update){
-    "\t.....UPDATING....." %>%
-      bold %>%
-      red %>%
-      cat
+  with_config(verbose(),{
+    httr::VERB(
+      verb = "POST",
+      url =
+        modify_url("https://us-central1-urban-wildlife-app.cloudfunctions.net/updateDetectionValStats",
+                   query = "authorization=eyJhbGciOiJSUzI1NiIsImtpZCI6ImNkMjM0OTg4ZTNhYWU2N2FmYmMwMmNiMWM0MTQwYjNjZjk2ODJjYWEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiODA5MzgxMTY2MzY5LXMxZXEwNTlnZmZmcnJiNWI1YXJydmVlNjY3aGk0YXN1LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiODA5MzgxMTY2MzY5LXMxZXEwNTlnZmZmcnJiNWI1YXJydmVlNjY3aGk0YXN1LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA2MDYzMjY2MjY2NjA1NDI1NTc1IiwiZW1haWwiOiJ1cmJhbi53aWxkbGlmZS5pbnN0aXR1dGVAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJLQjhBM3dCYzlQYlRReTluem16ZHF3IiwibmFtZSI6IlVyYmFuIFdpbGRsaWZlIEluc3RpdHV0ZSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS0vQUF1RTdtQUR1dlJ4ODhhN0ZoLVdTeUNENEFJX3VOTGpIZG9UcXZvTTR0OD1zOTYtYyIsImdpdmVuX25hbWUiOiJVcmJhbiBXaWxkbGlmZSIsImZhbWlseV9uYW1lIjoiSW5zdGl0dXRlIiwibG9jYWxlIjoiZW4iLCJpYXQiOjE1Nzg0MDc4NDIsImV4cCI6MTU3ODQxMTQ0MiwianRpIjoiMGI1MmY5NWQwMDVhYzcxYzA2OTU1YWY2ZjBhNWMwNWViNmJjZjM3NiJ9.KryTP0Kqyow2b9CtRpp4PpyyUCVJrrgn-lMwy-w3y3bmp36D59WuhaGpeiiSByI6ngw5_wg1d1Gs2sfl4zyhx533Sq6A8CtsYmWecBMtUcfWN4Cty4IZrJwDhi6AISsDjC4YE1G7QeT0o-TYEgnf5aGCWhXbZkmEzE7wk7viMkRVxbzj8dGfPuWxithi2vk7BV9x_oKuKu07ZliipeIjnQwjPyvkIBIG8nNSRm-kHOIMRDOrR_QABkxeJvnTftvlMIPIQeS_dVeE6YTg5EOKmNJsEMj239n10v88n-Fg73bho1s9Ml_Fa2dTiF7u4J7QhyqfPmoRvuaZV5WeoVf_gg"),
+      add_headers(`Content-Type` = "application/json",
+                  `cache-control` = "no-cache",
+                  `Accept` = "application/json"),
+      body= rjson::toJSON(list(photoGroupID = my_groups), indent = 1),
+      encode = "json")
+  })
 
-    #photos_to_correct$photoName <- paste0("'",photos_to_correct$photoName,"'")
-
-    updt_qry <- "Update Detections SET valStatID = 2 WHERE Detections.photoName in"
-    p_names <- paste0(photos_to_correct$photoName, collapse = ', ')
-    updt_qry <- paste(updt_qry, paste0("(",p_names,");"))
-
-    results <- RMariaDB::dbSendStatement(uwidb, updt_qry)
-    paste0("\t", dbGetRowsAffected(results), " rows affected") %>%
-      bold %>%
-      red %>%
-      cat
-    dbClearResult(results)
-  }
-} else {
-  "\n\tvalStatID up to date. No unnecessary photos sent to Validation flow.\n\n" %>%
-    bold %>%
-    green %>%
-    cat
 }
-
-dbDisconnect(uwidb)
-
-
-
-updt_qry <- "DELETE FROM DetectionSpecies WHERE DetectionSpecies.detectionID IN"
-p_names <- paste0(to_go, collapse = ', ')
-updt_qry <- paste(updt_qry, paste0("(",p_names,");"))
-
-MODIFY(updt_qry)
 
