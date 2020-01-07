@@ -5,15 +5,6 @@
 #################################################
 
 library(dplyr)
-library(crayon)
-source("connect_to_uwidb.R")
-
-"\nTest: Checking valStatID in Detections table" %>%
-  underline %>%
-  bold %>%
-  white %>%
-  cat
-
 
 tmp_qry <- "SELECT Detections.*, DetectionSpecies.speciesID,
 DetectionSpecies.detailID, DetectionSpecies.numIndividuals,
@@ -33,7 +24,8 @@ results <- SELECT(tmp_qry)
 results <- results[-which(duplicated(results)),]
 
 # get only tags that have photos with > 2 users
-photos_two_taggers <- results %>% group_by(photoName) %>%
+photos_two_taggers <- results %>%
+  group_by(photoName) %>%
   summarise(users_tagged = n_distinct(userID)) %>%
   filter(users_tagged > 1)
 
@@ -46,20 +38,25 @@ tags <- results[results$photoName %in% photos_two_taggers$photoName,] %>%
 
 # figure out how many tags were made by each user
 
-tags_collapse <- tags %>% group_by(photoName, userID) %>%
+tags_collapse <- tags %>%
+  group_by(photoName, userID) %>%
   summarise(full_tag = paste0(full_tag, collapse = "-"))
 
-
 # if tags are identical then unq_tags = 1, else not equal
-tag_summary <- tags_collapse %>% group_by(photoName) %>%
+tag_summary <- tags_collapse %>%
+  group_by(photoName) %>%
   summarise(unq_tags = n_distinct(full_tag))
 
-my_phooots <- results[which(results$photoName %in% photos_to_correct$photoName),]
+my_phooots <- results[which(results$photoName %in%
+                              photos_to_correct$photoName),]
 
-my_groups <- sort(unique(my_phooots$photoGroupID))
+my_groups <- sort(
+  unique(
+    my_phooots$photoGroupID
+  )
+)
 
 for(i in 1:length(my_groups)){
-
   with_config(verbose(),{
     httr::VERB(
       verb = "POST",
@@ -72,6 +69,5 @@ for(i in 1:length(my_groups)){
       body= rjson::toJSON(list(photoGroupID = my_groups), indent = 1),
       encode = "json")
   })
-
 }
 
