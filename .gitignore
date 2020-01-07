@@ -39,3 +39,4 @@ rsconnect/
 .Rd2pdf*
 
 /data/*
+/misc_reports/*
