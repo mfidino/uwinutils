@@ -224,6 +224,7 @@ progress_of <- function(
     "ph.photoName",
     "de.detectionID",
     "pg.completed",
+    "pg.photoGroupID",
     "de.valStatID",
     sep = ",\n")
 
@@ -250,20 +251,28 @@ q3$yearMonth <- paste(
   ),
   sep = "-"
 )
+# Make historical data count as 'completed'
+if(any(is.na(q3$completed) & q3$valStatID == 2)){
+  q3$completed[which(is.na(q3$completed) & q3$valStatID == 2)] <- 1
+}
 
- q_fullcomplete <- q3 %>% dplyr::group_by(yearMonth) %>%
-   dplyr::summarise(percentcomplete = sum(
-     completed, na.rm = TRUE) / length(completed),
-     TotalPhotos = length(unique(photoName)),
-     NotAssigned = sum(is.na(detectionID))
-     ) %>%
-   dplyr::arrange(yearMonth)
+# condense down to singular images
+q_condense <- q3[,c("photoName", "completed", "valStatID", "yearMonth")]
+q_condense <- q_condense[-which(duplicated(q_condense)),]
+
+q_fullcomplete <- q_condense %>% dplyr::group_by(yearMonth) %>%
+  dplyr::summarise(percentcompete = sum(
+    valStatID == 2, na.rm = TRUE) / length(unique(photoName)),
+    TotalPhotos = length(unique(photoName)),
+    NotAssigned = sum(is.na(valStatID))
+  ) %>%
+  dplyr::arrange(yearMonth)
 
 
  if(any(q3$completed == 1 & q3$valStatID ==1)){
    to_validate <- q3[which(q3$completed == 1 & q3$valStatID ==1),] %>%
      dplyr::group_by(yearMonth) %>%
-     dplyr::summarise(ToValidate = length(completed))
+     dplyr::summarise(ToValidate = length(unique(photoName)))
 
    q_fullcomplete <- dplyr::left_join(
      q_fullcomplete,
@@ -278,7 +287,7 @@ q3$yearMonth <- paste(
    dplyr::summarise(
      percentComplete = sum(
        valStatID %in% c(1,2), na.rm = TRUE
-       ) / length(valStatID),
+       ) / length(unique(photoName)),
      TotalPhotos = length(valStatID),
      NotAssigned = sum(is.na(detectionID))
    )
