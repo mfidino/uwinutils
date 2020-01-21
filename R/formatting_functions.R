@@ -24,7 +24,6 @@
 #' attributes(my_data)$format
 #' }
 #' @export
-
 check_format <- function(file){
   # Ensure it is a character
   if(!is.character(file)){
@@ -92,28 +91,3 @@ check_format <- function(file){
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# append 'day_' to the columns after Clumping(days)
-day_cols <- tmp_line[(tmp_clump + 1):length(tmp_line)]
-new_colnames <- paste0("day_", day_cols)
-colnames(data)[(tmp_clump + 1):length(tmp_line)] <- new_colnames
-
-
-test <- readLines("../uwin-socioeconomics/data/scut/Badger.Occupancy.Detection.History.csv",
-                  n = 1)
-
-emam <- read.csv("../uwin-socioeconomics/data/scut/Badger.Occupancy.Detection.History.csv",
-                 stringsAsFactors = FALSE)
