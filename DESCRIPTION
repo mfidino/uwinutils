@@ -19,5 +19,6 @@ Depends: R (>= 3.5.1),
 Imports:
   dplyr,
   rstudioapi,
-  lubridate
+  lubridate,
+  data.table
 RoxygenNote: 6.1.1
