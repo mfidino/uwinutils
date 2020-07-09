@@ -63,6 +63,14 @@ Sys.setenv(
     sep = ";"
   )
 )
+# what I would put on my mac to connect to gsutil from R
+Sys.setenv(
+  PATH = paste(
+    Sys.getenv("PATH"), 
+    "/Users/uwi/google-cloud-sdk/bin", # CHANGE THIS LINE 
+    sep = ":"
+  )
+)
 ```
 
 Following this, restart `R` and then check to see if you can call `gsutil` again.
