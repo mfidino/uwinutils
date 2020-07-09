@@ -6,7 +6,7 @@ connect2db()
 
 # whether you already know what the time should be in UTC
 have_as_utc <- FALSE
-new_datetime <- "" # PUT THE TIME HERE as ymd_hms
+new_datetime <- # PUT THE TIME HERE as ymd_hms
 
 # SOME NOTES. You'll want to figure out the time difference in the tz
 #  of the location. You then add that to the UTC time to get the
@@ -22,8 +22,9 @@ SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.v
 INNER JOIN Visits vi ON vi.visitID = ph.visitID
 INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
-WHERE sa.areaAbbr = 'ATGA'
-AND vi.visitID = 10222"
+WHERE sa.areaAbbr = 'SLMO'
+AND vi.visitID = 10987
+AND ph.photoName BETWEEN 'VID10987-00317.jpg' AND 'VID10987-00338.jpg'  "
 
 occ <- uwinutils::SELECT(tmp_qry)
 
@@ -46,7 +47,7 @@ occ$visitDateTime <- lubridate::with_tz(
 )
 
 # QUERY DOWN TO THE IMAGES YOU NEED CHANGED.
-to_change <- occ[which(year(occ$date) == 2022),]
+to_change <- occ[which(year(occ$date) == 2017),]
 
 if(!have_as_utc){
 # Here is our trick to figure out what the correct end time should
@@ -89,7 +90,7 @@ to_add <- difftime(
   abs
 
 # check if we add or subtract
-if(photo_time_utc > to_change$photoDateTime[nrow(to_change)]){
+if(photo_time_utc < to_change$photoDateTime[nrow(to_change)]){
   to_add <- to_add * -1
 }
 
@@ -106,7 +107,7 @@ hm <- tz_offset(to_change$time_update[1], "US/Mountain")
 
 # this is just a little smoketest to make sure things are right
 big_test <- paste0(
-  "SELECT ph.photoName, ph.photoDateTime, DATE_ADD(ph.photoDateTime, INTERVAL", to_add, "MINUTE ) AS newdate FROM Photos ph\n",
+  "SELECT ph.photoName, ph.photoDateTime, DATE_ADD(ph.photoDateTime, INTERVAL ", to_add, " MINUTE ) AS newdate FROM Photos ph\n",
   "WHERE ph.photoName = '", to_change$photoName[nrow(to_change)],"'"
 )
 
@@ -115,7 +116,7 @@ smoketest <- uwinutils::SELECT(
 )
 
 smoketest$newdate <-  lubridate::with_tz(
-  longshot$newdate,
+  smoketest$newdate,
   "UTC"
 )
 # take a little look to make sure it is okay
