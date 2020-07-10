@@ -23,8 +23,8 @@ INNER JOIN Visits vi ON vi.visitID = ph.visitID
 INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
 WHERE sa.areaAbbr = 'SLMO'
-AND vi.visitID = 10987
-AND ph.photoName BETWEEN 'VID10987-00317.jpg' AND 'VID10987-00338.jpg'  "
+AND vi.visitID = 10984
+AND ph.photoName BETWEEN 'VID10984-00006.jpg'  AND 'VID10984-0009.jpg'  "
 
 occ <- uwinutils::SELECT(tmp_qry)
 
@@ -51,29 +51,34 @@ to_change <- occ[which(year(occ$date) == 2017),]
 
 if(!have_as_utc){
 # Here is our trick to figure out what the correct end time should
-#  be for the LAST Photo.
-photo_time <- lubridate::with_tz(
-  lubridate::ymd_hms(
-    new_datetime
-    ),
-  ifelse(
+#  be for the LAST Photo. First make sure there is one
+#  default time zone
+  if(
     length(
       unique(
         occ$defaultTimeZone
       )
-    ) == 1,
-         unique(occ$defaultTimeZone),
-         stop("More than one default time zone.")
+    ) != 1){
+    stop("More than one default time zone.")
+  }
+  # this a date time object
+  tmp_date <- lubridate::ymd_hms(
+    new_datetime
   )
-)
+  # apply time zone
+  photo_time <- lubridate::with_tz(
+    tmp_date,
+    unique(occ$defaultTimeZone)
+  )
+
 # Force it to be UTC without allowing the offset
 photo_time_utc <- lubridate::force_tz(
   photo_time,
   "UTC"
 )
+
 } else {
-  photo_time_utc <- lubridate::
-    with_tz(
+  photo_time_utc <- lubridate::with_tz(
       lubridate::ymd_hms(
         new_datetime
       ),
@@ -98,13 +103,6 @@ if(photo_time_utc < to_change$photoDateTime[nrow(to_change)]){
 to_change$time_update <- to_change$photoDateTime +
   lubridate::minutes(to_add)
 
-# Not sure we need this...
-more_add <- difftime(force_tz(to_change$time_update[1], "US/Mountain"),
-             with_tz(to_change$time_update[1], "US/Mountain"),
-             units = "mins")
-# or this
-hm <- tz_offset(to_change$time_update[1], "US/Mountain")
-
 # this is just a little smoketest to make sure things are right
 big_test <- paste0(
   "SELECT ph.photoName, ph.photoDateTime, DATE_ADD(ph.photoDateTime, INTERVAL ", to_add, " MINUTE ) AS newdate FROM Photos ph\n",
@@ -124,18 +122,15 @@ smoketest
 
 # if we are good move on to do the sql update. This sets up our
 #  IN SQL statement
-in_qry <- paste0(
-  paste0(
-    "'",to_change$photoName,"'"
-  ),
-  collapse = ","
+in_qry <- uwinutils::sql_IN(
+  to_change$photoName
 )
 
 # and here is the query
 to_mod <- paste0(
   "UPDATE Photos\n",
   "SET photoDateTime = DATE_ADD(photoDateTime, INTERVAL ", to_add, " MINUTE)\n",
-  "WHERE photoName IN (", in_qry, ");"
+  "WHERE photoName IN ", in_qry, ";"
   )
 
 uwinutils::MODIFY(
