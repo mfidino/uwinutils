@@ -103,3 +103,33 @@ MODIFY <- function(sql = NULL, report = FALSE, db = uwidb){
   dbClearResult(qry)
 }
 
+
+#' Concatenate SQL IN statement
+#'
+#' \code{sql_IN} will create an IN statement from a vector of values.
+#'
+#' @param x A vector of values to create an IN statement with.
+#'
+#' @param add_quotes Whether to put single quotes around values.
+#'
+#' @return A sql_IN statement with single quotes around the values
+
+#'
+#' @examples
+#' my_in <- c("hello", "world")
+#' sql_IN(my_in)
+#'
+#' my_in2 <- c(1, 2, 3)
+#' sql_IN(my_in2, FALSE)
+#'
+#' @export
+sql_IN <- function(x, add_quotes = TRUE){
+  if(add_quotes){
+    to_return <- paste0("'",x,"'")
+  } else {
+    to_return <- x
+  }
+  to_return <- paste0(to_return, collapse = ", ")
+  to_return <- paste0("(", to_return, ")")
+  return(to_return)
+}
