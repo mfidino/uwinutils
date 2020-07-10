@@ -20,4 +20,4 @@ Imports:
   dplyr,
   rstudioapi,
   lubridate
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0

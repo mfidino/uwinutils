@@ -4,7 +4,7 @@
 \alias{progress_of}
 \title{The progress made for each season's worth of data}
 \usage{
-progress_of(studyArea, db = uwidb)
+progress_of(studyArea = NULL, db = uwidb)
 }
 \arguments{
 \item{studyArea}{The four letter capitalized study area abbreviation for a
@@ -19,8 +19,8 @@ a list with the following elements:\cr\cr
      that have been assigned but have yet to be finished.
      The columns in \code{assingedIncomplete} are:
      \itemize{
-       \item User: The name of the person who has photo groups to classify.\
-       \item email: The users email.\
+       \item User: The name of the person who has photo groups to classify.
+       \item email: The users email.
        \item yearMonth: The year and month of visits in the database that have photos.r
        \item countAssignedIncomplete: The number of photo groups assigned to a user
        per yearMonth that have not been completed.
