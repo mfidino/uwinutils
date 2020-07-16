@@ -143,6 +143,7 @@ images_of <- function(species = NULL,
 #' @importFrom utils select.list
 #' @importFrom dplyr distinct group_by  arrange  desc  summarise  left_join
 #' @importFrom lubridate month  year
+#' @importFrom stringr str_pad
 #'
 #' @examples
 #' \dontrun{
@@ -196,8 +197,12 @@ progress_of <- function(
     lubridate::year(
       q1$visitDate
     ),
-    lubridate::month(
-      q1$visitDate
+    stringr::str_pad(
+      lubridate::month(
+        q1$visitDate
+      ),
+      2,
+      pad = "0"
     ),
     sep = "-"
   )
@@ -241,27 +246,53 @@ progress_of <- function(
   if(any(q3$valStatID == 3, na.rm = TRUE)){
     q3 <- q3[-which(q3$valStatID == 3),]
   }
-q3$yearMonth <- paste(
+q3$yearMonth  <- paste(
   lubridate::year(
     q3$visitDate
   ),
-  lubridate::month(
-    q3$visitDate
+  stringr::str_pad(
+    lubridate::month(
+      q3$visitDate
+    ),
+    2,
+    pad = "0"
   ),
   sep = "-"
 )
+# need to reduce down to just images, whether it's been compled
+#  and the yearmonth
+q_fullcomplete <- q3[,c("photoName", "completed", "yearMonth", "detectionID")]
+q_fullcomplete$not_assigned <- 0
+q_fullcomplete$not_assigned[which(is.na(q_fullcomplete$detectionID))] <- 1
 
- q_fullcomplete <- q3 %>% dplyr::group_by(yearMonth) %>%
+q_fullcomplete <-
+  q_fullcomplete[,
+                 c(
+                   "photoName",
+                   "completed",
+                   "yearMonth",
+                   "not_assigned"
+                  )
+  ] %>%
+  dplyr::distinct(.)
+
+ q_fullcomplete <- q_fullcomplete %>% dplyr::group_by(yearMonth) %>%
    dplyr::summarise(percentcomplete = sum(
      completed, na.rm = TRUE) / length(completed),
      TotalPhotos = length(unique(photoName)),
-     NotAssigned = sum(is.na(detectionID))
+     NotAssigned = sum(not_assigned)
      ) %>%
    dplyr::arrange(yearMonth)
 
 
  if(any(q3$completed == 1 & q3$valStatID ==1)){
-   to_validate <- q3[which(q3$completed == 1 & q3$valStatID ==1),] %>%
+   q4 <- q3
+   to_go <- unique(q3$photoName[which(q3$valStatID == 2)])
+   q4 <- q4[-which(q4$photoName %in% to_go),]
+   q4 <- q4[q4$completed == 1,]
+   to_validate <- q4[which(q4$completed == 1 & q4$valStatID == 1),] %>%
+     dplyr::select(photoName, yearMonth, completed) %>%
+     dplyr::distinct(.) %>%
      dplyr::group_by(yearMonth) %>%
      dplyr::summarise(ToValidate = length(completed))
 

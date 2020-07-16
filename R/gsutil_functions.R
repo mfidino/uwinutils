@@ -36,8 +36,8 @@ gsutil_copy <- function(images_to_copy = NULL,
   if(!file.exists(output_folder)){
     dir.create(output_folder)
   }
-  cl <- makeCluster(ncore)
-  registerDoSNOW(cl)
+  cl <- snow::makeCluster(ncore)
+  doSNOW::registerDoSNOW(cl)
   cat('Copying images to', output_folder)
   pb <- progress_bar$new(
     format = "Images complete [:bar] :elapsed | eta: :eta",
@@ -52,7 +52,7 @@ gsutil_copy <- function(images_to_copy = NULL,
   foreach(i = 1:nrow(images_to_copy), .options.snow = opts) %dopar% {
     system(paste('gsutil cp',images_to_copy$filepath[i], output_folder))
   }
-  stopCluster(cl)
+  snow::stopCluster(cl)
   # prepare the csv to go along with those images
   to_save <- images_to_copy[,-grep('filepath', colnames(images_to_copy))]
   to_save$updateCommonName <- ""
