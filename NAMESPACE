@@ -2,6 +2,7 @@
 
 export(MODIFY)
 export(SELECT)
+export(b2utc)
 export(connect2db)
 export(gsutil_copy)
 export(images_of)

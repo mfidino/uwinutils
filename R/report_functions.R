@@ -189,7 +189,8 @@ progress_of <- function(
   )
 
   # grab the data
-  q1 <- SELECT(tmp_qry)
+  q1 <- try(SELECT(tmp_qry), silent = TRUE)
+  if(class(q1) != "try-error"){
   # convert started to yes / no
   q1$started <- ifelse(is.na(q1$started), "No", "Yes")
 
@@ -221,6 +222,9 @@ progress_of <- function(
 
   rm(my_cols)
   rm(tmp_qry)
+  } else {
+    q2 <- "No photogroups currently assigned"
+  }
   # Next thing is to check progress of all photos by month
 
   my_cols <- paste(

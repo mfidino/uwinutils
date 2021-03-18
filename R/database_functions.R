@@ -133,3 +133,23 @@ sql_IN <- function(x, add_quotes = TRUE){
   to_return <- paste0("(", to_return, ")")
   return(to_return)
 }
+
+
+#' Back to UTC
+#'
+#' \code{b2utc} changes the datetime object returned from SQL to UTC.
+#'
+#' @param x a datetime vector
+#'
+#'
+#' @return A datetime vector in UTC format
+#'
+#'
+#' @export
+b2utc <- function(x){
+  to_return <- lubridate::with_tz(
+    x,
+    "UTC"
+  )
+  return(to_return)
+}
