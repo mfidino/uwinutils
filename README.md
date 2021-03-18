@@ -93,4 +93,24 @@ gsutil_copy(images_to_copy = my_images,
 
 ```
 
+## Updating species from Unknown to actual species
+
+You can actually start this process with one line of code
+at this point:
+
+```R
+source("./workflow_example/change_unknown.R")
+```
+
+If you have not signed into the UWIN DB it will prompt you
+for the password. Additionally, the script will open up a 
+GUI for you to select the csv file you would like to update.
+
+There are a couple of QAQC checks that get done.
+
+1. The columns of the csv need to be `locationName, photoName, commonName, numIndividuals, updateCommonName, updateNumIndividuals, Month` in that order.
+2. The species names in `updateCommonName` need to be in the UWIN DB in the Species table.
+3. The site names in `locationName` need to be in the UWIN DB in the CameraLocations table.
+4. The photo names in `photoName` need to be in the UWIN DB in the Photos table.
+
 <div align="center"><img width="100" height="auto" src="https://github.com/mfidino/CV/blob/master/Raccoon.png" alt="A line drawing of a raccoon standing up and waving that Mason made." /></div>
