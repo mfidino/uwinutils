@@ -5,7 +5,7 @@ cities_to_report <- c("ININ","LBCA", "PHAZ",
                       "PACA", "IOIO", "RONY", "SLMO",
                       "WIDE", "CHIL")
 connect2db()
-for(report in 9:length(cities_to_report)){
+for(report in 1:length(cities_to_report)){
   the_city <- cities_to_report[report]
   time_to_disconnect <- report == length(cities_to_report)
   rmarkdown::render(
