@@ -1,0 +1,156 @@
+---
+title: "UWIN database progress report"
+author: "Prepared by: Mason Fidino & Cria Kay"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Note: this markdown file will not run on it's own
+#         Go to ./workflow_example/generate_progress_report.R
+knitr::opts_chunk$set(echo = TRUE)
+library(uwinutils)
+library(pander)
+test <- try(
+  SELECT("SELECT * FROM StudyAreas LIMIT 1"),
+  silent = TRUE
+)
+if(class(test) == "try-error"){
+  connect2db()
+}
+
+# get city name
+city_info <- SELECT(
+  paste0(
+    "SELECT * FROM StudyAreas sa WHERE sa.areaAbbr = '",the_city,"'"
+  )
+)
+report <- progress_of(the_city)
+if(!is.character(report$assignedIncomplete)){
+colnames(report$assignedIncomplete)[4] <- "count"
+}
+report$fullComplete$percentcomplete <- round(
+  report$fullComplete$percentcomplete,2
+) * 100
+report$pendingComplete$percentComplete <- round(
+  report$pendingComplete$percentComplete,2
+) * 100
+
+```
+
+This is a progress report for `r city_info$areaName`.
+
+---
+
+## Assigned but incomplete photogroups
+
+---
+
+The table below contains a summarized view of the number of 
+photogroups assigned to users that have yet to be completed. The 
+columns from this reported table are:
+
+
+```{r assigned_metadata, echo = FALSE}
+my_metadata <- data.frame(
+  `Column name` = c("User", "email" ,"yearMonth", "count"),
+  `Column type` = c("Character", "email", "Date (yyyy-mm)", "Integer"),
+  Details = c(
+    "The full name of a user who has photogroups that are not complete.",
+    "The email of the user.",
+    "Photogroups have been summarized down to the year and month. This was done so that if, for example, you are trying to complete a specific sampling season you know who still has data left to tag.",
+    "The number of photogroups a user has incomplete within a given yearMonth."
+  )
+)
+
+pander(my_metadata, "Metadata for Assigned but incomplete photogroups.") 
+
+```
+
+Your photogroups that have been assigned but not completed are:
+
+```{r not_complete, echo = FALSE}
+
+pander(report$assignedIncomplete, "Assigned but incomplete photogroups.") 
+```
+
+---
+
+## Full complete status
+
+---
+
+`r city_info$areaName` requires a minimum of `r city_info$numViewers` users to tag each photo to retire them. The table below shows the proportion of images tied
+to a given month that are completely tagged. The metadata for this table is:
+
+```{r full_comp_metadata, echo = FALSE}
+fc_metadata <- data.frame(
+  `Column name` = colnames(report$fullComplete),
+  `Column type` = c("Date (yyyy-mm)", "Proportion",
+                    "Integer", "Integer", "Integer"),
+  Details = c(
+    "The proportion of complete photos have been summarised down to visits that occurred in a given month.",
+    "The proportion of the total number of photos in a given month and year that are complete.",
+    "The total number of photos in a given month and year.",
+    "The number of photos that have yet to be assigned to a user to tag. This could mean that there are either photogroups that have not been assigned to users, or photos that have not been assigned to photogroups.",
+    "The number of photos tied to a given month and year that need to be tagged on the UWIN validation page."
+  )
+)
+
+pander(fc_metadata, "Metadata for full completion of uploaded photos.")
+```
+
+The photos you have completed are below. You can use this information to determine if you have completed tagging for a 
+given UWIN sampling season. For example, the July sampling season for a given year generally has visits with photos tied to July and August. If you wanted to check if your 2019 July sampling season was complete, you would inspect the 2019-07 and 2019-08 rows.
+
+```{r full_complete, echo = FALSE}
+pander(report$fullComplete, "Progress on being completely finished with tagging uploaded photos.") 
+```
+
+---
+
+## Pending complete status
+
+---
+
+If you require at least 2 taggers, this table is different
+from the full complete table (above). This table would then
+report the proportion of photos that at least one set of eyes (i.e., one tagger) has seen. Depending on who is tagging the images, having only one tagger may be sufficient for your
+city (e.g., a trained wildlife biologist is tagging the images,
+compared to students or volunteers).  
+
+The metadata for this table is very similar to the preceeding
+table.
+
+```{r pc_metadata, echo = FALSE}
+pc_meta <- data.frame(
+  `Column name` = colnames(report$pendingComplete),
+  `Column type` = c("Date (yyyy-mm)", "Proportion",
+                    "Integer", "Integer"),
+  Details = c(
+    "The proportion of complete photos have been summarised down to visits that occurred in a given month.",
+    "The proportion of the total number of photos in a given month and year that at least one user has tagged.",
+    "The total number of photos in a given month and year.",
+    "The number of photos that have yet to be assigned to a user to tag. This could mean that there are either photogroups that have not been assigned to users, or photos that have not been assigned to photogroups."
+  )
+)
+
+pander(pc_meta, "Metadata for non-validated completion of photos.")
+
+```
+
+And the photos that have been tagged at least once are:
+
+```{r pending_complete, echo = FALSE}
+
+pander(report$pendingComplete, "Progress on non-validated completion of uploaded photos.")
+
+```
+
+---
+
+```{r disconnect, echo = FALSE}
+if(time_to_disconnect){ 
+dbDisconnect(uwidb)
+}
+```

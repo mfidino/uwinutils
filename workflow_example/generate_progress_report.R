@@ -1,12 +1,35 @@
 library(uwinutils)
 
+cities_to_report <- c("ININ","LBCA", "PHAZ",
+                      "SAFA", "ATGA", "JAMS", "OACA",
+                      "PACA", "IOIO", "RONY", "SLMO",
+                      "WIDE", "CHIL")
+connect2db()
+for(report in 1:length(cities_to_report)){
+  the_city <- cities_to_report[report]
+  time_to_disconnect <- report == length(cities_to_report)
+  rmarkdown::render(
+    "./workflow_example/pretty_progress_report.Rmd",
+    output_file = paste0(
+      the_city,"_UWIN_PROGRESS_REPORT_",
+      format(Sys.time(), '%d-%m-%Y'),".pdf"
+    ),
+    output_dir = "./workflow_example/progress_report"
+  )
+}
+
+
+
+
 connect2db()
 
 
 test <- SELECT("SELECT * FROM StudyAreas")
 # do ININ
 
-the_city <- "SLMO"
+test[order(test$areaAbbr),]
+the_city <- "ININ"
+
 
 ci <- progress_of(the_city)
 
