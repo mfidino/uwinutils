@@ -2,11 +2,11 @@ library(uwinutils)
 
 connect2db()
 
-files$Detections.csv$SpeciesID[]
-my_path <- "../uwin-dataset/data/cnil/to_upload/"
-areaabbr <- "URIL"
 
-files$Species.csv[13,] <- c(13, "Empty", NA, NA, "empty")
+my_path <- "../uwin-api/csv-data/mawi/"
+areaabbr <- "MAWI"
+
+#files$Species.csv[13,] <- c(13, "Empty", NA, NA, "empty")
 file_paths <- list.files(
   my_path,
   full.names = TRUE
@@ -50,6 +50,27 @@ if(any(is.na(species_map))){
   files$Species.csv$newID <- species_map
 }
 
+# DetectionDetails map
+dd_map <- rep(NA, nrow(files$SpeciesDetails.csv))
+for(i in 1:length(dd_map)){
+  tmp_qry <- paste0(
+    "SELECT detailID FROM DetailsLookup dl WHERE\n",
+    "dl.detailText = '", files$SpeciesDetails.csv$DetailText[i],"';"
+  )
+  response <- try(
+    SELECT(tmp_qry),
+    silent = TRUE
+  )
+  if(is.data.frame(response)){
+    dd_map[i] <- response$detailID
+  }
+}
+if(any(is.na(dd_map))){
+  stop("add new detection details")
+} else {
+  files$SpeciesDetails.csv$newID <- dd_map
+}
+
 # map users
 user_map <- rep(NA, nrow(files$Users.csv))
 for(i in 1:length(user_map)){
@@ -71,14 +92,27 @@ if(any(is.na(user_map))){
   files$Users.csv$newID <- user_map
 }
 
+if(any(files$Detections.csv$StatusID == 3)){
+  to_go <- which(
+    files$Detections.csv$StatusID == 3
+  )
+  files$Detections.csv <- files$Detections.csv[-to_go,]
+}
+
 # start uploading detections
 pb <- txtProgressBar(max = nrow(files$Detections.csv))
-for(i in 3:nrow(files$Detections.csv)){
+upped <- rep(NA, length(nrow(files$Detections.csv)))
+
+for(i in 2:nrow(files$Detections.csv)){
   setTxtProgressBar(pb, i)
   #strip comment stuff
   tmp <- files$Detections.csv[i,]
   if(!is.na(tmp$Comments)){
-    tmp$Comments <- gsub("'|,", "", tmp$Comments)
+    weird_encoding <- try(nchar(tmp$Comments), silent = TRUE)
+    if(class(weird_encoding) == "try-error"){
+      tmp$Comments <- enc2utf8(tmp$Comments)
+    }
+    tmp$Comments <- gsub("'|,|;", "", tmp$Comments)
     if(nchar(tmp$Comments)>200){
       tmp$Comments <- substr(tmp$Comments, 1,200)
     }
@@ -102,6 +136,7 @@ for(i in 3:nrow(files$Detections.csv)){
   )
   # return the new detection ID
   if(!class(response) == "try-error"){
+    upped[i] <- "uploaded"
     newdetID <- SELECT(
       paste0(
         "SELECT detectionID FROM Detections de WHERE",
@@ -115,8 +150,27 @@ for(i in 3:nrow(files$Detections.csv)){
   }
 
   # Now insert speciesDetections
-  if(!is.na(tmp$DetailID)){
-    stop("Add in mapping to new species details")
+  if(is.na(tmp$DetailID)){
+    newID <- 1
+  } else {
+    whichID <- which(
+      files$SpeciesDetails.csv$DetailID ==
+        tmp$DetailID &
+        files$SpeciesDetails.csv$SpeciesID ==
+        tmp$SpeciesID
+    )
+    if(length(whichID) == 0){
+      stop("You screwed up the details query. fix it.")
+    }else{
+      newID <- files$SpeciesDetails.csv$newID[whichID]
+      if(length(newID)>1){
+      if(length(unique(newID))==1){
+        newID <- unique(newID)
+      } else {
+        stop("got 2 IDs, that is no good")
+      }
+      }
+    }
   }
   tmp_qry <- paste0(
     "INSERT INTO DetectionSpecies (detectionID, speciesID,",
@@ -125,7 +179,7 @@ for(i in 3:nrow(files$Detections.csv)){
     files$Species.csv$newID[
       files$Species.csv$SpeciesID == tmp$SpeciesID
     ],", ",
-    1,", ",
+    newID,", ",
     tmp$Individuals,");"
   )
 
@@ -140,4 +194,5 @@ for(i in 3:nrow(files$Detections.csv)){
     }
     stop("investigate the issue")
   }
+  rm(newID)
 }

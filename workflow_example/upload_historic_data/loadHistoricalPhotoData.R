@@ -21,8 +21,8 @@ library(lubridate)
 connect2db()
 
 
-my_path <- "../uwin-dataset/data/cnil/to_upload/"
-areaabbr <- "URIL"
+my_path <- "../uwin-api/csv-data/mawi/"
+areaabbr <- "MAWI"
 
 file_paths <- list.files(
   my_path,
@@ -102,18 +102,26 @@ for(i in 1:length(visits_map)){
 if(any(is.na(visits_map))){
   stop("You need to upload new visits")
 }
+ #files$Visits.csv <- files$Visits.csv[-c(51),]
+ #visits_map <- visits_map[-51]
 files$Visits.csv$newID <- visits_map
 # update the datetime stuff
+
 files$Photos.csv$ImageDate <- as.character(
   mdy_hms(files$Photos.csv$ImageDate)
 )
-pb <- txtProgressBar(max = nrow(files$Photos.csv))
 
 
-for(i in 649:nrow(files$Photos.csv)){
+pb <- txtProgressBar(min = 1, max = nrow(files$Photos.csv))
+im_up <- rep(NA, nrow(files$Photos.csv))
+
+for(i in 1:nrow(files$Photos.csv)){
   setTxtProgressBar(pb, i)
   tmp <- files$Photos.csv[i,]
   fullpath <- paste0(tmp$FilePath, tmp$FileName)
+  if(nchar(fullpath)>200){
+    stop("reduce filepath length")
+  }
   tmp_qry <- paste0(
     "INSERT INTO Photos (photoName, photoDatetime, filepath,",
     " highlighted, visitID, areaID) VALUES ('",
@@ -128,12 +136,66 @@ for(i in 649:nrow(files$Photos.csv)){
     silent = TRUE
   )
   if(class(response) == "try-error"){
-    if(grep("Duplicate", response[1]) == 1){
+    if(length(grep("Duplicate", response[1])) == 1){
       cat("\nduplicate image", i,"\n\n")
+      im_up[i] <- "duplicate"
+      next
+    }
+    if(length(grep("Incorrect datetime value: 'NA", response[1]))==1){
+      cat("\n No datetime. Row", i, "skipped.\n\n")
+      im_up[i] <- "no datetime"
       next
     }
     stop("investigate issue")
   }
+  im_up[i] <- "uploaded"
 }
 
+# drop detections with no datetime
+to_go <- which(im_up == "no datetime")
+to_go <- files$Photos.csv$ImageID[to_go]
+
+
+ph <- files$Photos.csv
+
+test <- paste0(ph$FilePath, ph$FileName)
+
+test <- gsub("\\\\\\\\", "//", test)
+test <- gsub("\\\\", "/", test)
+
+
+# check to see if images are in db
+tmp_ph <- split(
+  files$Photos.csv,
+  factor(floor(1:nrow(files$Photos.csv)/ 1000))
+)
+
+ph_in <- vector("list", length(tmp_ph))
+
+# fix duplicate photos
+
+for(i in 1:length(ph_in)){
+  tqry <- SELECT(
+    paste0(
+      "SELECT * FROM Photos ph\n",
+      "WHERE ph.photoName IN ",
+      sql_IN(tmp_ph[[i]]$FileName)
+    )
+  )
+  ph_in[[i]] <- tqry
+}
+SELECT("SELECT ph.imageID FROM Photos ph Where ph.photoName = '04030001.JPG'")
+# pb <- txtProgressBar(max = nrow(files$Photos.csv))
+# for(i in 1:nrow(files$Photos.csv)){
+#   tmp <- files$Photos.csv[i,]
+#   to_up <- paste0(
+#     "UPDATE Photos SET photoDateTime = ",
+#     shQuote(tmp$ImageDate), " WHERE ",
+#     "photoName = ", shQuote(tmp$FileName), ";"
+#   )
+#   MODIFY(to_up)
+#   setTxtProgressBar(pb, i)
+#
+#
+# }
 

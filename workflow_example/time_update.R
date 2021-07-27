@@ -1,6 +1,5 @@
 library(uwinutils)
 library(lubridate)
-library(lutz) # lookup timezone!
 
 connect2db()
 
@@ -18,11 +17,12 @@ b2utc(
 
 # whether you already know what the time should be in UTC
 have_as_utc <- TRUE
-new_datetime <- "2020-03-24 20:47:00" # PUT THE TIME HERE as ymd_hms
+
+new_datetime <- "2021-3-6 18:45:56" # PUT THE TIME HERE as ymd_hms
 #my_visitid <- 13385
 
 # Change from first photo (FALSE) or last photo (TRUE)
-from_last_photo <- TRUE
+from_last_photo <- FALSE
 
 # SOME NOTES. You'll want to figure out the time difference in the tz
 #  of the location. You then add that to the UTC time to get the
@@ -38,28 +38,28 @@ SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.v
 INNER JOIN Visits vi ON vi.visitID = ph.visitID
 INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
-WHERE sa.areaAbbr = 'PACA'
-AND ph.photoName BETWEEN 'VID10286-00006.jpg'  AND 'VID10286-00089.jpg'  "
+WHERE sa.areaAbbr = 'URIL'
+AND ph.photoName BETWEEN 'VID17148-00000.jpg'  AND 'VID17148-00755.jpg'  "
 
 occ <- uwinutils::SELECT(tmp_qry)
 
 # the output from above assumes a timezone associated to your
 #  device, which is not very great. We change everything
 #  BACK to UTC here.
-occ$photoDateTime <- lubridate::with_tz(
-  occ$photoDateTime,
-  "UTC"
-)
+# occ$photoDateTime <- lubridate::with_tz(
+#   occ$photoDateTime,
+#   "UTC"
+# )
 # collect just the date
 occ$date <- as.Date(
   occ$photoDateTime,
   format = "%Y-%M-%d"
 )
 # convert visitDateTime as well
-occ$visitDateTime <- lubridate::with_tz(
-  occ$visitDateTime,
-  "UTC"
-)
+# occ$visitDateTime <- lubridate::with_tz(
+#   occ$visitDateTime,
+#   "UTC"
+# )
 
 # QUERY DOWN TO THE IMAGES YOU NEED CHANGED.
 # If not need to do further queries create an object
@@ -95,12 +95,9 @@ photo_time_utc <- lubridate::force_tz(
 )
 
 } else {
-  photo_time_utc <- lubridate::with_tz(
-      lubridate::ymd_hms(
+  photo_time_utc <- lubridate::ymd_hms(
         new_datetime
-      ),
-    "UTC"
-  )
+      )
 }
 
 diff_loc <- ifelse(
@@ -135,10 +132,10 @@ smoketest <- uwinutils::SELECT(
   big_test
 )
 
-smoketest$newdate <-  lubridate::with_tz(
-  smoketest$newdate,
-  "UTC"
-)
+# smoketest$newdate <-  lubridate::with_tz(
+#   smoketest$newdate,
+#   "UTC"
+# )
 # take a little look to make sure it is okay
 smoketest
 new_datetime

@@ -20,8 +20,9 @@ library(lubridate)
 
 connect2db()
 
-my_path <- "../uwin-dataset/data/cnil/to_upload/"
-areaabbr <- "URIL"
+
+my_path <- "../uwin-api/csv-data/mawi/"
+areaabbr <- "MAWI"
 
 file_paths <- list.files(
   my_path,
@@ -93,12 +94,12 @@ if(any(is.na(camera_map))){
 files$Cameras.csv$newID <- camera_map
 
 # Now map the action ID's
-action_map <- rep(NA, nrow(files$actions.csv))
+action_map <- rep(NA, nrow(files$Actions.csv))
 for(i in 1:length(action_map)){
   tmp_qry <- paste0(
     "SELECT actionID FROM ActionsLookup al\n",
     "WHERE al.actionName = '",
-    files$actions.csv$Action[i],"';"
+    files$Actions.csv$Action[i],"';"
   )
   response <- try(
     SELECT(
@@ -113,7 +114,7 @@ for(i in 1:length(action_map)){
 if(any(is.na(action_map))){
   stop("Upload missing actions.")
 }
-files$actions.csv$newID <- action_map
+files$Actions.csv$newID <- action_map
 # now the lure map
 lure_map <- rep(NA, nrow(files$Lures.csv))
 for(i in 1:length(lure_map)){
@@ -136,18 +137,27 @@ if(any(is.na(lure_map))){
   stop("Upload missing lures.")
 }
 files$Lures.csv$newID <- lure_map
-
+# store whether the data was uploaded
+vi_up <- rep(NA, nrow(files$Visits.csv))
 # Upload the visits
-pb <- txtProgressBar(max = nrow(files$Visits.csv))
-for(i in 3:nrow(files$Visits.csv)){
+pb <- txtProgressBar(min = 1, max = nrow(files$Visits.csv))
+for(i in 2:nrow(files$Visits.csv)){
   setTxtProgressBar(pb, i)
   tmp <- files$Visits.csv[i,]
+  # convert 0 to NA if they are there in actions.
+  tmp[,grep("Action", colnames(tmp))] <-
+    as.numeric(gsub("^0$", NA, tmp[,grep("Action", colnames(tmp))]))
   VisitID = 0
   # make sure comments are under 200 characters, don't have
   #  commas, etc.
   if(!is.na(tmp$Comments)){
-    # drop commas, apostrophes
-    tmp$Comments <- gsub("'|,", "", tmp$Comments)
+    # drop commas, apostrophes, etc.
+    # futz with encoding issues
+    weird_encoding <- try(nchar(tmp$Comments), silent = TRUE)
+    if(class(weird_encoding) == "try-error"){
+      tmp$Comments <- enc2utf8(tmp$Comments)
+    }
+    tmp$Comments <- gsub("'|,|~|\"", "", tmp$Comments)
     if(nchar(tmp$Comments) > 200){
       # under 200
       tmp$Comments <- substr(tmp$Comments,1,200)
@@ -178,7 +188,7 @@ for(i in 3:nrow(files$Visits.csv)){
             files$CameraLocations.csv$LocationID == tmp$LocationID
           ],", ",
           files$Cameras.csv$newID[
-            files$Cameras.csv$ID == tmp$CameraID
+            files$Cameras.csv$CameraID == tmp$CameraID
           ],", ",
           tmp$SensitivityID," );"
               )
@@ -212,7 +222,7 @@ for(i in 3:nrow(files$Visits.csv)){
             files$CameraLocations.csv$LocationID == tmp$LocationID
             ],", ",
           files$Cameras.csv$newID[
-            files$Cameras.csv$ID == tmp$CameraID
+            files$Cameras.csv$CameraID == tmp$CameraID
             ],", ",
           tmp$SensitivityID," );"
         )
@@ -225,6 +235,12 @@ for(i in 3:nrow(files$Visits.csv)){
 
     }
     if(class(response) == "try-error"){
+      # Check if it is a duplicate.
+      has_dupe <- grep("Duplicate", response)
+      if(length(has_dupe) == 1){
+        vi_up[i] <- "duplicate"
+        next
+      }
       stop("Issue with upload, start writing exceptions")
     }
     #Assuming it went through...
@@ -241,9 +257,9 @@ for(i in 3:nrow(files$Visits.csv)){
     # add on the actions now
     if(visitID != 0){
       # try action 1 if available
-      if(!is.na(tmp$ActionID1)){
-        a1 <- files$actions.csv$newID[
-          files$actions.csv$ID == tmp$ActionID1
+      if(!is.na(tmp$Action1ID)){
+        a1 <- files$Actions.csv$newID[
+          files$Actions.csv$ID == tmp$Action1ID
         ]
         atmp <- paste0(
           "INSERT INTO VisitActions (visitID, actionID)",
@@ -256,9 +272,9 @@ for(i in 3:nrow(files$Visits.csv)){
         )
       }
       # try action 2 if avilable
-      if(!is.na(tmp$ActionID2)){
-        a2 <- files$actions.csv$newID[
-          files$actions.csv$ID == tmp$ActionID2
+      if(!is.na(tmp$Action2ID)){
+        a2 <- files$Actions.csv$newID[
+          files$Actions.csv$ID == tmp$Action2ID
           ]
         atmp <- paste0(
           "INSERT INTO VisitActions (visitID, actionID)",
@@ -271,9 +287,9 @@ for(i in 3:nrow(files$Visits.csv)){
         )
       }
       # and then action 3
-      if(!is.na(tmp$ActionID3)){
-        a3 <- files$actions.csv$newID[
-          files$actions.csv$ID == tmp$ActionID3
+      if(!is.na(tmp$Action3ID)){
+        a3 <- files$Actions.csv$newID[
+          files$Actions.csv$ID == tmp$Action3ID
           ]
         atmp <- paste0(
           "INSERT INTO VisitActions (visitID, actionID)",
@@ -298,5 +314,6 @@ for(i in 3:nrow(files$Visits.csv)){
         silent = TRUE
       )
     }
+    vi_up[i] <- "upload"
   }
 

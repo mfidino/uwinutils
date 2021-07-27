@@ -11,6 +11,87 @@ library(lubridate)
 library(dplyr)
 connect2db()
 
+# little function we need for this:
+data_source <- function(x){
+  # We first want to determine if it's cloud data
+  #  this shoud have 1) one file and 2) should start with
+  #  "Seasons Legend:,Start Date,End Date"
+
+  # first rule, determine number of files in folder
+  files <- list.files(
+    x,
+    full.names = TRUE
+  )
+
+  nfile <- length(
+    files
+  )
+
+  if(nfile == 1){
+    # then check to see if the first line is
+    firstline <-
+      readLines(
+        files,
+        n = 1
+      )
+    if(firstline == "Seasons Legend:,Start Date,End Date"){
+      return("CLOUD")
+    }
+  }
+
+  # check to see if this was summarized from the uwin access db
+  #  we can determine if the folder contains "site_locations.csv" and
+  #  "observation_matrix.csv"
+  has_site_locations <- grep(
+    "site_locations.csv",
+    files
+  )
+  has_observation_mat <- grep(
+    "observation_matrix.csv",
+    files
+  )
+  if(
+    all(
+      c(
+        length(has_site_locations) == 1,
+        length(has_observation_mat) == 1
+      )
+    )
+  ){
+    return("ACCESS")
+  }
+  # MAKS has some seasons generated differently
+  if(
+    length(grep("*\\.xls", files)) > 0 &
+    !all(
+      c(
+        length(has_site_locations) == 1,
+        length(has_observation_mat) == 1
+      )
+    ) &
+    nfile > 1
+  ){
+    return("CPW_WAREHOUSE")
+  }
+
+  if(
+    length(grep("scut|sewa|lbca", x)) == 1 &
+    all(
+      c(
+        length(has_site_locations) == 0,
+        length(has_observation_mat) == 0
+      )
+    ) &
+    nfile > 1
+  ){
+    return("PRECLEANED")
+  }
+
+  # if neither of these are true then the data are from some other source
+  return("UNKNOWN")
+}
+
+
 # the folder to save all the data in.
 data_dest <- paste0(
   "../uwin-dataset/data_", Sys.Date()
@@ -18,7 +99,7 @@ data_dest <- paste0(
 if(!file.exists(data_dest)){
   dir.create(data_dest)
 }
-years <- 2016:2020
+years <- 2016:2021
 
 # The unique season codes I'll need for making
 # the correct folders
@@ -542,18 +623,45 @@ for(city in 1:nrow(cities)){
      )
 
   }
-  # Next step. Check to see if there is any data that is missing that
-  # needs to be pulled over.
-
-  # the number of seasons
-  # Next steps.
-  # 1. Create the folder structure for a given city.
-  # 2. Create the last bit of the csv structure for the report
-  # 3. Save everything.
-  # 4. Folding in the data is a different step, we need to keep
-  #    all of the access data and whatnot.
 
 }
+# check to see if there are any cities with data that were not
+#  brought over.
 
+# get folder names in uwin-dataset
+fnames_uwds <- list.files(
+  "../uwin-dataset/data/",
+  "^\\w\\w\\w\\w$"
+)
 
+# and the folder names in new dataset
+fnames_new <- list.files(
+  data_dest,
+  "^\\w\\w\\w\\w$"
+)
+to_add <- fnames_uwds[which(!fnames_uwds %in% fnames_new)]
+
+if(length(to_add) > 0){
+  for(i in 1:length(to_add)){
+    dir.create(
+      paste0(data_dest,"/", to_add[i])
+    )
+    # check how many folders we need to recreate
+    to_make <- list.files(
+      paste0("../uwin-dataset/data/",to_add[i]),
+      "^0"
+    )
+    for(j in 1:length(to_make)){
+      dir.create(
+        paste0(data_dest,"/",to_add[i],"/",to_make[j])
+      )
+      file.copy(
+        paste0("../uwin-dataset/data/",to_add[i],"/",to_make[j]),
+        paste0(data_dest,"/",to_add[i]),
+        recursive = TRUE
+      )
+    }
+  }
+
+}
 
