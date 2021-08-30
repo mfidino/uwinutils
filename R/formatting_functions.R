@@ -1,6 +1,6 @@
 #' Formatting different data outputs for occupancy analyses
 #'
-#' \code{check_format} inspects the first line of a data file to determine if
+#' \code{check_format} inspects the first line of a file to determine if
 #'   it came from emammal, the distributed UWIN Access DB, or the UWIN cloud
 #'   DB.
 #'
@@ -30,6 +30,7 @@ check_format <- function(file){
     err <- paste0("invalid 'type' (", class(file),") of argument")
     stop(err)
   }
+
   # read in the first line of data, and drop UTF-encoding character if it
   #  exists.
   tmp_line <- data.table::fread(
@@ -87,6 +88,54 @@ check_format <- function(file){
   }
 
   return(data)
+
+}
+
+format_emammal <- function(data, start_date = NULL, end_date = NULL,
+                           occ_data = NULL){
+  # Quick check to make sure the data come from emammal. It could
+  #  be that someone reads in the emammal data via read.csv
+  #  or something or the other.
+  tmp_line <- colnames(data)
+  tmp_clump <- grep("Clumping\\(days\\)|Clumping\\.days\\.", tmp_line)
+
+  if(length(tmp_clump) > 0 & is.null(attributes(data)$format)){
+    attributes(data)$format <- "emammal"
+  }
+
+  if(attributes(data)$format != "emammal"){
+    err <- "This is not emammal data (i.e., does not contain a 'Clumping(days)' column)."
+    stop(err)
+  }
+
+  # get dates
+  if(is.null(start_date)){
+    start_date_vec <- data$date.out
+  } else if(is.numeric(start_date)){
+    start_date_vec <- data[,start_date]
+  } else if(is.character(start_date)){
+    start_date_vec <- data[[start_date]]
+  }
+  start_date_vec <- lubridate::mdy(start_date_vec)
+  if(is.null(end_date)){
+    end_date_vec <- data$date.in
+  } else if(is.numeric(end_date)){
+    end_date_vec <- data[,end_date]
+  } else if(is.character(end_date)){
+    end_date_vec <- data[[end_date]]
+  }
+  end_date_vec <- lubridate::mdy(end_date_vec)
+
+  # check that all end dates are after start dates
+  if(!all(end_date_vec > start_date_vec)){
+
+  }
+
+
+  if(attributes(data)$format != "emammal"){
+    err <- "This"
+
+  }
 
 }
 
