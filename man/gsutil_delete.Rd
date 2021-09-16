@@ -4,7 +4,7 @@
 \alias{gsutil_delete}
 \title{Delete images from google cloud}
 \usage{
-gsutil_delete(images_to_delete = NULL, ncore = 2)
+gsutil_delete(images_to_delete = NULL, ncore = 2, all = FALSE)
 }
 \arguments{
 \item{images_to_delete}{a data.frame with a column titled 'filepath'.
@@ -13,6 +13,8 @@ deleted from}
 
 \item{ncore}{a numeric scalar. The number of cores to use to copy images
 from google cloud. It defaults to 2.}
+
+\item{all}{Delete all photos in a given folder? Defaults to FALSE.}
 }
 \description{
 \code{gsutil_delete} takes in the object from \code{images_of} and deletes them
