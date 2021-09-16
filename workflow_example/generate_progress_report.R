@@ -1,9 +1,6 @@
 library(uwinutils)
 
-cities_to_report <- c("ININ","LBCA", "PHAZ",
-                      "SAFA", "ATGA", "JAMS", "OACA",
-                      "PACA", "IOIO", "RONY", "SLMO",
-                      "WIDE", "CHIL")
+cities_to_report <- c("JAMS")
 connect2db()
 for(report in 1:length(cities_to_report)){
   the_city <- cities_to_report[report]
