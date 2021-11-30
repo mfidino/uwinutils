@@ -1,6 +1,6 @@
 library(uwinutils)
 
-cities_to_report <- c("JAMS")
+cities_to_report <- c("AHGA")
 connect2db()
 for(report in 1:length(cities_to_report)){
   the_city <- cities_to_report[report]

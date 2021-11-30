@@ -1,6 +1,6 @@
 ---
 title: "UWIN database progress report"
-author: "Prepared by: Mason Fidino & Cria Kay"
+author: "Prepared by: Mason Fidino & Kimberly Rivera"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
