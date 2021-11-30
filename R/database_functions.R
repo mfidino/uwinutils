@@ -153,3 +153,34 @@ b2utc <- function(x){
   )
   return(to_return)
 }
+
+
+#' Wrapper function for paste for prettier sql statements
+#'
+#' \code{sqlpaste} will add a new line to the end of every paste statement.
+#' If the last object is a sole ";", it will be tacked onto the element before it.
+#'
+#' @param ... one or more `R` objects, to be converted to character vectors.
+#'
+#' @return A nicely formatted SQL statement.
+#'
+#' @examples
+#' \dontrun{
+#' tmp_qry <- sqlpaste(
+#' "select * from tbldf",
+#' "where tbldf.column == 'value'"
+#' )
+#' response <- SELECT(tmp_qry)
+#' }
+#' @export
+sqlpaste <- function(...){
+  dots <- list(...)
+  if(";" == dots[length(dots)]){
+    dots[[length(dots)-1]] <- paste0(
+      dots[[length(dots)-1]],dots[[length(dots)]]
+    )
+    dots <- dots[1:(length(dots)-1)]
+  }
+  return(paste(dots, collapse = "\n"))
+}
+

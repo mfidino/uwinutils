@@ -289,7 +289,7 @@ q_fullcomplete <-
    dplyr::arrange(yearMonth)
 
 
- if(any(q3$completed == 1 & q3$valStatID ==1)){
+ if(any(q3$completed == 1 & q3$valStatID ==1, na.rm=TRUE)){
    q4 <- q3
    to_go <- unique(q3$photoName[which(q3$valStatID == 2)])
    q4 <- q4[-which(q4$photoName %in% to_go),]

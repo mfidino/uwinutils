@@ -151,3 +151,31 @@ gsutil_delete <- function(images_to_delete = NULL,
 
 
 
+#' Move images between folders on Google cloud
+#'
+#' \code{gsutil_move} requires paths \code{from} (where the images
+#' are located) and \code{to} where the images should go on google cloud.
+#'
+#' @param from paths of files or folders to move
+#'
+#' @param to paths of where files should go. If \code{from} and \code{to} are
+#'   folders, this will move all files between them. If files,
+#'   then the file will be moved (which can be used to rename images if needed).
+#'
+#'
+#'@export
+gsutil_move <- function(from = NULL,to = NULL){
+  # Check to see if google-cloud-sdk is in path variable
+  if(length(grep('google-cloud-sdk', Sys.getenv('PATH'))) != 1 ){
+    stop('google-cloud-sdk is not in your PATH environment variable.',
+         '\nTo add it, see readME on www.github.com/mfidino/uwinutils')
+  }
+
+    # go through each folder and drop, otherwise go through
+    #  selective images
+    for(i in 1:length(from)){
+      system(paste('gsutil -m mv', from[i], to[i]))
+    }
+}
+
+
