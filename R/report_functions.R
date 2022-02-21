@@ -271,6 +271,9 @@ q_fullcomplete$not_assigned[which(is.na(q_fullcomplete$detectionID))] <- 1
 # turn that does not start with VID into 0
 if(length(grep("^VID", q_fullcomplete$photoName)) != nrow(q_fullcomplete)){
   q_fullcomplete$not_assigned[-grep("^VID", q_fullcomplete$photoName)] <- 0
+  q3$valStatID[-grep("^VID", q3$photoName)] <- 2
+  q3$completed[-grep("^VID", q3$photoName)] <- 1
+  q3$detectionID[-grep("^VID", q3$photoName)] <- -1
 }
 
 q_fullcomplete <-
