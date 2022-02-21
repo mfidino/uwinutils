@@ -268,6 +268,10 @@ q3$yearMonth  <- paste(
 q_fullcomplete <- q3[,c("photoName", "completed", "yearMonth", "detectionID")]
 q_fullcomplete$not_assigned <- 0
 q_fullcomplete$not_assigned[which(is.na(q_fullcomplete$detectionID))] <- 1
+# turn that does not start with VID into 0
+if(length(grep("^VID", q_fullcomplete$photoName)) != nrow(q_fullcomplete)){
+  q_fullcomplete$not_assigned[-grep("^VID", q_fullcomplete$photoName)] <- 0
+}
 
 q_fullcomplete <-
   q_fullcomplete[,

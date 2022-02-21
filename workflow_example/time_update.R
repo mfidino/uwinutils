@@ -9,8 +9,8 @@ connect2db()
 #  the UWIN web app for that.
 b2utc(
   lubridate::ymd_hms(
-    "2018-09-27 17:03:00",
-    tz = "US/Eastern"
+    "2021-11-1 13:17:00",
+    tz = "US/Central"
   )
 )
 
@@ -18,11 +18,11 @@ b2utc(
 # whether you already know what the time should be in UTC
 have_as_utc <- TRUE
 
-new_datetime <- "2021-3-6 18:45:56" # PUT THE TIME HERE as ymd_hms
+new_datetime <- "2021-11-01 18:17:00" # PUT THE TIME HERE as ymd_hms
 #my_visitid <- 13385
 
 # Change from first photo (FALSE) or last photo (TRUE)
-from_last_photo <- FALSE
+from_last_photo <- TRUE
 
 # SOME NOTES. You'll want to figure out the time difference in the tz
 #  of the location. You then add that to the UTC time to get the
@@ -33,13 +33,28 @@ from_last_photo <- FALSE
 
 # You just need the visitID and the area abbreviation. you can
 #  of course add more here if you want.
+
+# step 1. look at all the photos
+
+first_look <- SELECT(
+  paste0(
+    "SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime FROM Photos ph\n",
+    "INNER JOIN Visits vi ON vi.visitID = ph.visitID\n",
+    "INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
+    "WHERE sa.areaAbbr = 'SLMO'\n",
+    "AND vi.visitID = 24123"
+  )
+)
+
+
 tmp_qry <- "
 SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime FROM Photos ph
 INNER JOIN Visits vi ON vi.visitID = ph.visitID
 INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
-WHERE sa.areaAbbr = 'URIL'
-AND ph.photoName BETWEEN 'VID17148-00000.jpg'  AND 'VID17148-00755.jpg'  "
+WHERE sa.areaAbbr = 'SLMO'
+AND ph.photoName BETWEEN 'VID24123-00000.jpg'  AND 'VID24123-00280.jpg'  "
 
 occ <- uwinutils::SELECT(tmp_qry)
 
@@ -125,7 +140,8 @@ to_change$time_update <- to_change$photoDateTime +
 # this is just a little smoketest to make sure things are right
 big_test <- paste0(
   "SELECT ph.photoName, ph.photoDateTime, DATE_ADD(ph.photoDateTime, INTERVAL ", to_add, " MINUTE ) AS newdate FROM Photos ph\n",
-  "WHERE ph.photoName = '", to_change$photoName[diff_loc],"'"
+  "WHERE ph.photoName IN ", sql_IN(to_change$photoName)
+  #"WHERE ph.photoName = '", to_change$photoName[diff_loc],"'"
 )
 
 smoketest <- uwinutils::SELECT(
@@ -137,7 +153,7 @@ smoketest <- uwinutils::SELECT(
 #   "UTC"
 # )
 # take a little look to make sure it is okay
-smoketest
+smoketest[diff_loc,]
 new_datetime
 
 # if we are good move on to do the sql update. This sets up our

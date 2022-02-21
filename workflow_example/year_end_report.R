@@ -1,12 +1,13 @@
+library(uwinutils)
 
 connect2db()
 
 city <- "CHIL"
-myear <- 2015:2020
+myear <- 2021
 
 
 tmp_qry <- "
-SELECT DISTINCT sa.areaName, lol.landOwnerName, cl.fullName, sp.commonName, year(vi.visitDateTime) as 'year'
+SELECT DISTINCT sa.areaName, lol.landOwnerName, cl.fullName, sp.commonName, year(vi.visitDateTime) as 'year', ph.photoName, ph.photoDateTime
 FROM Detections de
 INNER JOIN DetectionSpecies ds ON de.detectionID = ds.detectionID
 INNER JOIN Photos ph ON ph.photoName = de.photoName
@@ -15,7 +16,7 @@ INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
 INNER JOIN LandOwnerLookup lol ON lol.landOwnerID = cl.landOwnerID
 INNER JOIN Species sp ON sp.speciesID = ds.speciesID
-WHERE year(vi.visitDateTime) IN (2020)
+WHERE year(vi.visitDateTime) IN (2018, 2019, 2020, 2021)
 AND de.valStatID IN (1,2)
 AND sa.areaAbbr = 'NACA'
 ORDER BY sa.areaName, lol.landOwnerName, year, cl.fullName, sp.commonName
@@ -25,8 +26,11 @@ SELECT("SELECT * FROM LandOwnerLookup LIMIT 1")
 
 ch_dat <- SELECT(tmp_qry)
 
+tmp <- lubridate::ymd_hms(ch_dat$photoDateTime)
+tmp <- lubridate::with_tz(tmp, tz = "US/Eastern")
+ch_dat$photoDateTime <- as.character(tmp)
 # for 2020
-ch_2020 <- ch_dat[ch_dat$year == 2020,]
+ch_2020 <- ch_dat[ch_dat$year == 2021,]
 
 ch_2020 <- ch_2020[-which(ch_2020$landOwnerName %in% c("Lake County", "Dupage County")),]
 
@@ -40,10 +44,17 @@ ch_long <- ch_dat[which(ch_dat$landOwnerName %in% c("Lake County", "Dupage Count
 unique(ch_2020$commonName)
 
 to_go <- c("Empty", "Unknown", "B&W squirrel", "Squirrel (cannot ID)",
-           "Lawn mower", "Golf cart ", "Mouse", "Bird")
+           "Lawn mower", "Golf cart ", "Mouse", "Bird", "Human")
 ch_2020 <- ch_2020[-which(ch_2020$commonName %in% to_go),]
 
-write.csv(ch_2020, "Chicago_2020_only.csv", row.names = FALSE)
+library(dplyr)
+
+ch_2020 <- ch_2020 %>%
+  group_by(areaName, landOwnerName,fullName,commonName,year) %>%
+  summarise(nPhotos = length(photoName))
+
+
+write.csv(ch_2020, "Chicago_2021_only.csv", row.names = FALSE)
 
 
 
@@ -63,7 +74,7 @@ write.csv(ch_long, "dupage_lake.csv", row.names = FALSE)
 ch_dat <- ch_dat[order(ch_dat$landOwnerName, ch_dat$fullName, ch_dat$fullName),]
 
 
-write.csv(ch_dat, "NACA_2020.csv", row.names = FALSE)
+write.csv(ch_dat, "NACA_all_data_time.csv", row.names = FALSE)
 SELECT("SELECT * FROM LandOwnerLookup LIMIT 1")
 
 SELECT("SELECT * FROM INFORMATION_SCHEMA.TABLES
