@@ -312,6 +312,8 @@ q_fullcomplete <-
      to_validate,
      by = "yearMonth"
    )
+ }else{
+   q_fullcomplete$ToValidate <- NA
  }
 
 
