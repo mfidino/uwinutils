@@ -77,6 +77,7 @@ Following this, restart `R` and then check to see if you can call `gsutil` again
 
 `system('gsutil --help')`
 
+Additionally, it would be helpful if you have Git installed on your computer to make use of the `xargs` command line function, which can be used in conjuction with `gsutil` to indvidually a batch of images saved to a csv.
 
 ## Copy images of a specific species
 
