@@ -153,7 +153,6 @@ buffers <- data.frame(
 )
 
 
-
 for(city in 1:nrow(cities)){
   # Pull all the locations, visits, etc.
 
@@ -367,7 +366,7 @@ for(city in 1:nrow(cities)){
 # The tabulated season folders all start with a leading zero
   season_paths <- list.files(
     paste0(
-      "../uwin-dataset/data/",
+      "../uwin-dataset/data_2022-04-11/",
       tolower(cities$areaAbbr[city])
     ),
     "0[0-9]?[1-9]_",

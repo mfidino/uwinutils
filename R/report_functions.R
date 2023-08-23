@@ -178,7 +178,7 @@ progress_of <- function(
     "SELECT DISTINCT\n", my_cols, " FROM Visits vi\n",
     "INNER JOIN Photos ph ON vi.visitID = ph.visitID\n",
     "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
-    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN Locations cl ON cl.locationID = vi.locationID\n",
     "LEFT JOIN AssignedPhotoGroup apg on pg.photoGroupID = apg.photoGroupID\n",
     "LEFT JOIN Users ON Users.userID = apg.userID\n",
     "LEFT JOIN StudyAreas sa ON cl.areaID = sa.areaID\n",
@@ -240,7 +240,7 @@ progress_of <- function(
     "SELECT ", my_cols, " FROM Photos ph\n",
     "LEFT JOIN Detections de ON de.photoName = ph.photoName\n",
     "LEFT JOIN Visits vi on vi.visitID = ph.visitID\n",
-    "LEFT JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "LEFT JOIN Locations cl ON cl.locationID = vi.locationID\n",
     "LEFT JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
     "LEFT JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
     "WHERE sa.AreaAbbr = '", studyArea, "';"
