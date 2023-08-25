@@ -18,15 +18,15 @@ data_dest <- paste0(
 if(!file.exists(data_dest)){
   dir.create(data_dest)
 }
-years <- 2019:2020
+years <- 2020:2021
 
 # The unique season codes I'll need for making
 # the correct folders
 unq_se <- paste0(
-  c("AP", "JU"),
-  rep(years - 2000, each = 2)
-  #c("JA", "AP", "JU", "OC"),
-  #rep(years - 2000, each = 4)
+  #c("AP", "JU"),
+  #rep(years - 2000, each = 2)
+  c("JA", "AP", "JU", "OC"),
+  rep(years - 2000, each = 4)
 )
 
 # Step 1. Get the names of each city that has detection data
@@ -41,8 +41,7 @@ cities <- SELECT(qry)
 
 # reduce cities down
 
-to_keep <- c("CHIL", "ATGA", "ININ", "OACA", "JAMS", "LBCA",
-             "PACA", "IOIO", "RONY", "SLMO", "WIDE")
+to_keep <- c("IOIO")
 
 cities <- cities[cities$areaAbbr %in% to_keep,]
 # Step 2. Get the species we want to query
@@ -65,8 +64,8 @@ species <- species[order(species$commonName),]
 # This starts setting up the sampling windows
 seasons <- expand.grid(
   years,
-  c(4,7),
-  #c(1,4,7,10),
+  #c(4,7),
+  c(1,4,7,10),
   1
   ) %>% apply(
     .,
@@ -82,7 +81,7 @@ buffers <- data.frame(
 
 
 city_data <- vector("list", nrow(cities))
-for(city in 7:nrow(cities)){
+for(city in 1:nrow(cities)){
   # Pull all the locations, visits, etc.
   cat("\n",cities$areaAbbr[city],"\n\n")
   vis_loc <- SELECT(
@@ -197,6 +196,11 @@ for(city in 7:nrow(cities)){
      )
    # reduce tmp down to the species we are interested in
    tmp <- tmp[tmp$commonName %in% species$commonName,]
+   # check again if there is no data
+   if(nrow(tmp) == 0){
+     det_list[[season]] <- NA
+     next
+   }
    citytime <- as.numeric(
      tmp$photoDatetime - floor_date(tmp$photoDatetime, "1 day"),
      unit = "secs"
@@ -224,6 +228,11 @@ all_data <- dplyr::bind_rows(city_data)
 
 write.csv(
   all_data,
-  "../uwin-dataset/covid_2021-06-17/all_data.csv",
+  "../uwin-dataset/covid_2023-06-28/ioio_data.csv",
   row.names = FALSE
+)
+
+
+MODIFY(
+  "update Users set areaID = 1 where userID = 177"
 )

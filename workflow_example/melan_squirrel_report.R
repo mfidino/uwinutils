@@ -94,13 +94,13 @@ data_source <- function(x){
 
 # the folder to save all the data in.
 data_dest <- paste0(
-  "../uwin-dataset/data_", Sys.Date()
+  "../uwin-dataset/data_squirrel", Sys.Date()
 )
 if(!file.exists(data_dest)){
   dir.create(data_dest)
 }
 # the years of data you want to query
-years <- 2011:2023
+years <- 2021:2022
 
 # The unique season codes I'll need for making
 # the folder. We have four distinct months we
@@ -117,11 +117,16 @@ INNER JOIN CameraLocations cl on cl.areaID = sa.areaID
 INNER JOIN Visits vi ON vi.locationID = cl.locationID
 INNER JOIN Photos ph ON ph.visitID = vi.visitID
 INNER JOIN Detections de ON de.photoName = ph.photoName
-WHERE NOT sa.areaAbbr IN('CHMF', 'FAKE', 'CHIL2', 'TEST')"
+WHERE NOT sa.areaAbbr IN('CHMF', 'FAKE', 'CHIL2')"
 cities <- SELECT(qry)
 
 cities <- cities[order(cities$areaAbbr),]
 
+cities <- cities[
+  cities$areaAbbr %in% c("CHIL", "SLMO", "URIL",
+                         "BOMA", "BUNY", "RONY",
+                         "WIDE", "NACA", "NYNY"),
+]
 # Step 2. Get the species we want to query
 
 # this is a curated list to drop out all the birds and
@@ -138,6 +143,9 @@ species <- SELECT(
   )
 )
 species <- species[order(species$commonName),]
+species <- species[
+  species$commonName %in% c("Eastern gray squirrel", "melanistic gray squirrel"),
+]
 
 # This starts setting up the sampling windows
 seasons <- expand.grid(
@@ -161,11 +169,12 @@ buffers <- data.frame(
   upper = ceiling_date(seasons, "month") + 13
 )
 
-
+buffers <- buffers[4:8,]
+unq_se <- unq_se[4:8]
 
 for(city in 1:nrow(cities)){
   print(cities$areaAbbr[city])
-  #if(cities$areaAbbr[city] == 'POCA') next
+  if(cities$areaAbbr[city] == 'POCA') next
   # Pull all the locations, visits, etc.
 
   vis_loc <- SELECT(
@@ -431,6 +440,7 @@ for(city in 1:nrow(cities)){
   # this specifies the number of seasons of data we have
   #  for a given city
   folders_to_make <- unique(c(just_seasons, has_data))
+  folders_to_make <- folders_to_make[folders_to_make %in% unq_se]
   # order them appropriately
   folders_to_make <- folders_to_make %>%
     factor(., levels = unq_se) %>%
@@ -641,7 +651,7 @@ for(city in 1:nrow(cities)){
 
 # get folder names in uwin-dataset
 fnames_uwds <- list.files(
-  "../uwin-dataset/data_2023-02-13/",
+  "../uwin-dataset/data_2022-09-15/",
   "^\\w\\w\\w\\w$"
 )
 

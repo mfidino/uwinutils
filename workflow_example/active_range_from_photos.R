@@ -12,7 +12,7 @@
 ############################
 
 my_ids <- c(
-# put ID's here
+  hm$visitID
 )
 
 
@@ -45,3 +45,10 @@ for(i in 1:length(my_ids)){
   rm(my_range)
   rm(to_up)
 }
+
+dd <- SELECT("select * from CameraLocations cl where cl.areaID = 1")
+
+dd <- dd[grep("^C", dd$locationAbbr),]
+
+dd <- dd[,c("locationAbbr", "utmEast","utmNorth","utmZone")]
+dd$crs <- 32616

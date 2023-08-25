@@ -1,5 +1,14 @@
 library(uwinutils)
 library(lubridate)
+Sys.setenv(
+  PATH = paste(
+    Sys.getenv("PATH"),
+    "/Users/uwi/google-cloud-sdk/bin", # CHANGE THIS LINE
+    sep = ":"
+  )
+)
+
+
 
 connect2db()
 
@@ -9,7 +18,7 @@ connect2db()
 #  the UWIN web app for that.
 b2utc(
   lubridate::ymd_hms(
-    "2021-11-1 13:17:00",
+    "2023-01-19 10:29:00",
     tz = "US/Central"
   )
 )
@@ -18,7 +27,7 @@ b2utc(
 # whether you already know what the time should be in UTC
 have_as_utc <- TRUE
 
-new_datetime <- "2021-11-01 18:17:00" # PUT THE TIME HERE as ymd_hms
+new_datetime <- "2023-01-19 16:29:00" # PUT THE TIME HERE as ymd_hms
 #my_visitid <- 13385
 
 # Change from first photo (FALSE) or last photo (TRUE)
@@ -36,17 +45,27 @@ from_last_photo <- TRUE
 
 # step 1. look at all the photos
 
+my_visitID <- 35214
 first_look <- SELECT(
   paste0(
-    "SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime FROM Photos ph\n",
+    "SELECT cl.locationAbbr, cl.locationID, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime, vi.activeStart, vi.activeEnd, ph.filepath FROM Photos ph\n",
     "INNER JOIN Visits vi ON vi.visitID = ph.visitID\n",
     "INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
     "INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
-    "WHERE sa.areaAbbr = 'SLMO'\n",
-    "AND vi.visitID = 24123"
+    "WHERE vi.visitID = ", my_visitID
   )
 )
 
+head(first_look)
+range(first_look$photoDateTime)
+first_look[,3:4]
+
+first_look <- first_look[order(first_look$photoDateTime),]
+row.names(first_look) <- NULL
+gsutil_copy(
+  data.frame(filepath = first_look$filepath[6:9]),
+  "/Users/uwi/Documents/GitHub/uwin-munging/slmo_dt"
+)
 
 tmp_qry <- "
 SELECT cl.locationAbbr, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime FROM Photos ph
@@ -54,10 +73,12 @@ INNER JOIN Visits vi ON vi.visitID = ph.visitID
 INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID
 INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID
 WHERE sa.areaAbbr = 'SLMO'
-AND ph.photoName BETWEEN 'VID24123-00000.jpg'  AND 'VID24123-00280.jpg'  "
+AND ph.photoName BETWEEN 'VID33942-00000.jpg'  AND 'VID33942-00086.jpg'  "
 
 occ <- uwinutils::SELECT(tmp_qry)
 
+#occ <- occ[year(occ$photoDateTime) == 2017,]
+#occ <- occ[order(occ$photoDateTime),]
 # the output from above assumes a timezone associated to your
 #  device, which is not very great. We change everything
 #  BACK to UTC here.
@@ -179,31 +200,29 @@ rm(new_datetime)
 #  date
 y <- SELECT(
   paste0(
-    "SELECT * FROM Photos ph WHERE ph.visitID = ", my_visitid,";"
+    "SELECT * FROM Photos ph WHERE ph.visitID = ", my_visitID,";"
   )
 )
 
-y$photoDateTime <- lubridate::with_tz(
-  y$photoDateTime,
-  "UTC"
-)
-
-new_range <- range(y$photoDateTime)
+new_range <- range(y$photoDateTime, na.rm = TRUE)
 
 to_comp <- SELECT(
   paste0(
-    "SELECT * FROM Visits vi WHERE vi.visitID = ", my_visitid,";"
+    "SELECT * FROM Visits vi WHERE vi.visitID = ", my_visitID,";"
   )
 )
-to_comp$visitDatetime <- lubridate::with_tz(
-  to_comp$visitDatetime,
-  "UTC"
-)
+
 if(to_comp$firstPhotoDate != new_range[1] ){
   to_up <- paste0(
     "UPDATE Visits\n",
     "SET firstPhotoDate = '", new_range[1],"'\n",
-    "WHERE visitID = ", my_visitid,";"
+    "WHERE visitID = ", my_visitID,";"
+  )
+  MODIFY(to_up, TRUE)
+  to_up <- paste0(
+    "UPDATE Visits\n",
+    "SET activeStart = '", new_range[1],"'\n",
+    "WHERE visitID = ", my_visitID,";"
   )
   MODIFY(to_up, TRUE)
 }
@@ -212,7 +231,14 @@ if(to_comp$lastPhotoDate != new_range[2] ){
   to_up2 <- paste0(
     "UPDATE Visits\n",
     "SET lastPhotoDate = '", new_range[2],"'\n",
-    "WHERE visitID = ", my_visitid,";"
+    "WHERE visitID = ", my_visitID,";"
+  )
+  MODIFY(to_up2, TRUE)
+
+  to_up2 <- paste0(
+    "UPDATE Visits\n",
+    "SET activeEnd = '", new_range[2],"'\n",
+    "WHERE visitID = ", my_visitID,";"
   )
   MODIFY(to_up2, TRUE)
 }
