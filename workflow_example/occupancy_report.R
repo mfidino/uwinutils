@@ -162,7 +162,6 @@ buffers <- data.frame(
 )
 
 
-
 for(city in 1:nrow(cities)){
   print(cities$areaAbbr[city])
   #if(cities$areaAbbr[city] == 'POCA') next
