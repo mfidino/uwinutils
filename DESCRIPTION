@@ -12,7 +12,7 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5.1),
   magrittr,
-  RMariaDB,
+  RMariaDB, 
   doSNOW,
   progress,
   foreach
@@ -21,4 +21,4 @@ Imports:
   rstudioapi,
   lubridate,
   stringr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.1

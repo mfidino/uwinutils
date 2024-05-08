@@ -11,7 +11,7 @@
 #'   city. If left as \code{NULL} you can select the study area from a pop up
 #'   list. Only one study area may be selected at a time.
 #'
-#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#' @param db The MySQL connection to the UWIN database. Defaults to 'uwidb'
 #'
 #' @return a data.frame with the following columns:
 #' - filepath: the location of the image on google cloud
@@ -33,7 +33,7 @@
 images_of <- function(species = NULL,
                       studyArea = NULL,
                       db = uwidb){
-  if(class(db) != 'MariaDBConnection'){
+  if(class(db) != 'MySQLConnection'){
     stop('db is not the correct class, please connect to database with connect2db().')
   }
   # pull the species
@@ -100,7 +100,7 @@ images_of <- function(species = NULL,
 #'   city. If left as \code{NULL} you can select the study area from a pop up
 #'   list. Only one study area may be selected at a time.
 #'
-#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#' @param db The MySQL connection to the UWIN database. Defaults to 'uwidb'
 #'
 #' @return a list with the following elements:\cr\cr
 #'  - \code{assignedIncomplete} (data.frame): This is a report on photo groups

@@ -15,7 +15,7 @@ Multiple species can be selected by holding CTRL when clicking on them.}
 city. If left as \code{NULL} you can select the study area from a pop up
 list. Only one study area may be selected at a time.}
 
-\item{db}{The MariaDB connection to the UWIN database. Defaults to 'uwidb'}
+\item{db}{The MySQL connection to the UWIN database. Defaults to 'uwidb'}
 }
 \value{
 a data.frame with the following columns:

@@ -10,7 +10,7 @@ SELECT(sql = NULL, db = uwidb)
 \item{sql}{A SQL statement input as a character vector to be sent to the
 UWIN database.}
 
-\item{db}{The MariaDB connection to the UWIN database. Defaults to 'uwidb'}
+\item{db}{The MySQL connection to the UWIN database. Defaults to 'uwidb'}
 }
 \value{
 A data.frame with the output from the SQL statement.

@@ -11,7 +11,7 @@
 #' a connection is attempted.
 #'
 #' @return If the password is correctly input \code{connect2db} will return
-#' a \code{MariaDBConnection} called \code{uwidb.} to the global environment.
+#' a \code{MySQLConnection} called \code{uwidb.} to the global environment.
 #'
 #' @importFrom rstudioapi askForPassword
 #'
@@ -45,7 +45,7 @@ connect2db <- function(){
 #' @param sql A SQL statement input as a character vector to be sent to the
 #'   UWIN database.
 #'
-#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#' @param db The MySQL connection to the UWIN database. Defaults to 'uwidb'
 #'
 #' @return A data.frame with the output from the SQL statement.
 
@@ -60,7 +60,7 @@ SELECT <- function(sql = NULL, db = uwidb){
   if(!is.character(sql)){
     stop('sql must be a character object')
   }
-  if(class(db) != 'MariaDBConnection'){
+  if(class(db) != 'MySQLConnection'){
     stop('db is not the correct class, please connect to database with connect2db().')
   }
   qry <- dbSendQuery(db, sql)
@@ -83,7 +83,7 @@ SELECT <- function(sql = NULL, db = uwidb){
 #' @param report Logical. Whether or not to report the number of rows
 #'   affected. Defaults to \code{FALSE}.
 #'
-#' @param db The MariaDB connection to the UWIN database. Defaults to 'uwidb'
+#' @param db The MySQL connection to the UWIN database. Defaults to 'uwidb'
 #'
 #'
 #'@export
@@ -91,7 +91,7 @@ MODIFY <- function(sql = NULL, report = FALSE, db = uwidb){
   if(!is.character(sql)){
     stop('sql must be a character object')
   }
-  if(class(db) != 'MariaDBConnection'){
+  if(class(db) != 'MySQLConnection'){
     stop('db is not the correct class, please connect to database with connect2db().')
   }
   qry <- dbSendStatement(uwidb, sql)
