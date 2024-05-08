@@ -13,7 +13,7 @@ UWIN database.}
 \item{report}{Logical. Whether or not to report the number of rows
 affected. Defaults to \code{FALSE}.}
 
-\item{db}{The MariaDB connection to the UWIN database. Defaults to 'uwidb'}
+\item{db}{The MySQL connection to the UWIN database. Defaults to 'uwidb'}
 }
 \description{
 \code{MODIFY} can be used, for example, to update or delete records in the
