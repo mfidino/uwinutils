@@ -50,3 +50,17 @@ rsconnect/
 workflow_example/progress_report/*
 
 workflow_example/*
+Chicago_2021_only.csv
+deer_elaf.csv
+elaf_deer_dets.csv
+elaf_wtd.csv
+inin_detections_2018.csv
+lrar_all_raw.csv
+lrar_species_table.csv
+NACA_all_data.csv
+NACA_all_data_time.csv
+naca_site.csv
+raccoon_ids.csv
+SLMO_2021_detection_summary.csv
+ted_data.csv
+workflow_example/.DS_Store
