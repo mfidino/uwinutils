@@ -13,12 +13,12 @@ library(rjson)
 
 connect2db()
 
-my_key <- "eyJhbGciOiJSUzI1NiIsImtpZCI6IjYzMWZhZTliNTk0MGEyZDFmYmZmYjAwNDAzZDRjZjgwYTIxYmUwNGUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiODA5MzgxMTY2MzY5LXMxZXEwNTlnZmZmcnJiNWI1YXJydmVlNjY3aGk0YXN1LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiODA5MzgxMTY2MzY5LXMxZXEwNTlnZmZmcnJiNWI1YXJydmVlNjY3aGk0YXN1LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTEzMjU2NTgyNTI1MDg2MjU4NDY1IiwiZW1haWwiOiJtYXNvbmZpZGlub0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6InE5dFhVQW5oLXR1X0JCNDFQMjdjOFEiLCJuYW1lIjoiTWFzb24gRmlkaW5vIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FJdGJ2bWszZVZhREZMY2pQRnlnR2E4X2Y1V2xrYUhLYkFCVndRZER0U2tHPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6Ik1hc29uIiwiZmFtaWx5X25hbWUiOiJGaWRpbm8iLCJsb2NhbGUiOiJlbiIsImlhdCI6MTY1NzgzMjM2MSwiZXhwIjoxNjU3ODM1OTYxLCJqdGkiOiIxNDMwY2NhYWVlZmY4YTEzNDA0YzNiMTc3N2EyMWMyMDlmYjM4MzQzIn0.Zd0K4rUTlFRKm6DzdiQtcQGUbjOE5TtyQiOhDIQDEmRzCV7u_-TkgPK4xpj0ZTQYY6AyzQIBtjcEefkBICqME7TrE9v-fogw-80bsjMpRfgtkWeiFf4g9-YFIY4y_cuOpGDQhP3omn7a97QV15GAZBbZW5WYZlTs7ipsGOVe2gzZwZyCy0xgy2h0zLFXWCTLNxv8jgXiEPsrYhPLy7uZcB89hETxHHtbMggqZ8Sy3IgQJwX4sqA00pFYz8h8pyUGS3dzYq5EljUGlVpLcuP5mYHdn6ndSDf9vjyhsg0thIDe3mGV2ytc5z2Z3GYBFB9qnFuA-ZsI3OgU8RKgAz_gog"
+my_key <- "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM2MjYzZDA5NzQ1YjUwMzJlNTdmYTZlMWQwNDFiNzdhNTQwNjZkYmQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI4MDkzODExNjYzNjktczFlcTA1OWdmZmZycmI1YjVhcnJ2ZWU2NjdoaTRhc3UuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI4MDkzODExNjYzNjktczFlcTA1OWdmZmZycmI1YjVhcnJ2ZWU2NjdoaTRhc3UuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTMyNTY1ODI1MjUwODYyNTg0NjUiLCJlbWFpbCI6Im1hc29uZmlkaW5vQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiXzVZeEhKMWFCWUtrdnlHcjByaDZFZyIsIm5hbWUiOiJNYXNvbiBGaWRpbm8iLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSlRueUFHMk5penE5UlQtVERfaVpsdV83RWh1dkFpZ3ZJbndnWURQMV9IZW9zPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6Ik1hc29uIiwiZmFtaWx5X25hbWUiOiJGaWRpbm8iLCJsb2NhbGUiOiJlbiIsImlhdCI6MTY5NzE0MDE5NCwiZXhwIjoxNjk3MTQzNzk0fQ.XDmNbn85s7tQRBDO2v2ll1u4mja9q2OxdZ9qX8Xx8QsUZBqFRmeZgWvNXPCVix4bDULjkkASg9kMNdK1iQCb1RfQWnobRGXj76cJ6z9GLH-iCfD2s6fkdmLxlipVyCJUrdW1HkJppDrdg_JCcFC_vnENNs0WYNPqF-b-7urhlg1UQiocit3bJ4lbRaY9LOobaUugA5bUEH4BMTmSZYDEb93HWDUAt5HWPgC7bbIhZwtXo-w0SXrSCoC_Z__18uLAhTG1dcALITU9ogDrflaqqQSpizmOuRJ5X9hsASEP9kEnjC8eQ_YcHIKUT3gFUmEKivZFxNnpPwRr5XCBvkttvg"
 
 # Step 1. Get the names of each city that has detection data
 qry <- "
 SELECT DISTINCT sa.areaAbbr FROM StudyAreas sa
-INNER JOIN CameraLocations cl on cl.areaID = sa.areaID
+INNER JOIN Locations cl on cl.areaID = sa.areaID
 INNER JOIN Visits vi ON vi.locationID = cl.locationID
 INNER JOIN Photos ph ON ph.visitID = vi.visitID
 INNER JOIN Detections de ON de.photoName = ph.photoName"
@@ -43,7 +43,7 @@ q1  <- paste0(
   "FROM Detections de\n",
   "STRAIGHT_JOIN (SELECT ph.photoName, pg.photoGroupID, apg.completed, apg.userID, sa.numViewers FROM Photos ph\n",
   "INNER JOIN Visits vi ON vi.visitID = ph.visitID\n",
- "INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+ "INNER JOIN Locations cl ON cl.locationID = vi.locationID\n",
  "INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
  "INNER JOIN PhotoGroup pg ON pg.photoGroupID = ph.photoGroupID\n",
  "INNER JOIN AssignedPhotoGroup apg ON apg.photoGroupID = pg.photoGroupID\n",
@@ -125,7 +125,7 @@ pid_vec <-
 
 
 
-for(i in 2:length(pid_vec)){
+for(i in 1:length(pid_vec)){
 
   cat("\n",i,"of", length(pid_vec),"\n")
 
@@ -134,9 +134,9 @@ tmp_response <- httr::with_config(httr::verbose(),{
     verb = "POST",
     url =
       modify_url("https://us-central1-urban-wildlife-app.cloudfunctions.net/updateDetectionValStats",
-                 query = paste0("authorization=",my_key)),
+                 query = paste0("authorization=Bearer%20",my_key)),
     add_headers(`Content-Type` = "application/json",
-                `cache-control` = "no-cache",
+                `Cache-Control` = "no-cache",
                 `Accept` = "application/json"),
     body= rjson::toJSON(list(photoGroupID = pid_vec[i]), indent = 1),
     encode = "json")
@@ -149,7 +149,7 @@ if(tmp_response$status_code != 200){
       verb = "POST",
       url =
         modify_url("https://us-central1-urban-wildlife-app.cloudfunctions.net/updateDetectionValStats",
-                   query = paste0("authorization=",my_key)),
+                   query = paste0("authorization=Bearer%20",my_key)),
       add_headers(`Content-Type` = "application/json",
                   `cache-control` = "no-cache",
                   `Accept` = "application/json"),

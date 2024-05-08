@@ -45,12 +45,12 @@ from_last_photo <- TRUE
 
 # step 1. look at all the photos
 
-my_visitID <- 35214
+my_visitID <- 30512
 first_look <- SELECT(
   paste0(
     "SELECT cl.locationAbbr, cl.locationID, ph.photoDateTime, ph.photoName, sa.defaultTimeZone, vi.visitDateTime, vi.activeStart, vi.activeEnd, ph.filepath FROM Photos ph\n",
     "INNER JOIN Visits vi ON vi.visitID = ph.visitID\n",
-    "INNER JOIN CameraLocations cl ON cl.locationID = vi.locationID\n",
+    "INNER JOIN Locations cl ON cl.locationID = vi.locationID\n",
     "INNER JOIN StudyAreas sa ON sa.areaID = cl.areaID\n",
     "WHERE vi.visitID = ", my_visitID
   )
@@ -63,7 +63,7 @@ first_look[,3:4]
 first_look <- first_look[order(first_look$photoDateTime),]
 row.names(first_look) <- NULL
 gsutil_copy(
-  data.frame(filepath = first_look$filepath[6:9]),
+  data.frame(filepath = first_look$filepath[1:3]),
   "/Users/uwi/Documents/GitHub/uwin-munging/slmo_dt"
 )
 
@@ -242,4 +242,6 @@ if(to_comp$lastPhotoDate != new_range[2] ){
   )
   MODIFY(to_up2, TRUE)
 }
+
+
 

@@ -48,3 +48,5 @@ rsconnect/
 /misc_reports/*
 
 workflow_example/progress_report/*
+
+workflow_example/*

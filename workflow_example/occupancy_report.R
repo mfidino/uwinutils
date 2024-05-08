@@ -6,6 +6,8 @@
 #
 ################################# start on line 490
 
+
+
 library(uwinutils)
 library(lubridate)
 library(dplyr)
@@ -113,7 +115,7 @@ unq_se <- paste0(
 # Step 1. Get the names of each city that has detection data
 qry <- "
 SELECT DISTINCT sa.areaAbbr, sa.areaID FROM StudyAreas sa
-INNER JOIN CameraLocations cl on cl.areaID = sa.areaID
+INNER JOIN Locations cl on cl.areaID = sa.areaID
 INNER JOIN Visits vi ON vi.locationID = cl.locationID
 INNER JOIN Photos ph ON ph.visitID = vi.visitID
 INNER JOIN Detections de ON de.photoName = ph.photoName
@@ -169,8 +171,8 @@ for(city in 1:nrow(cities)){
 
   vis_loc <- SELECT(
     paste0(
-      "SELECT v.visitID, v.activeStart, v.activeEnd, v.firstPhotoDate, v.lastPhotoDate, cl.utmEast, cl.utmNorth, cl.utmZone, cl.locationAbbr, cl.defaultTimeZone FROM Visits v\n",
-      "INNER JOIN CameraLocations cl ON cl.locationID = v.locationID\n",
+      "SELECT v.visitID, v.activeStart, v.activeEnd, v.firstPhotoDate, v.lastPhotoDate, cl.longitude, cl.latitude, cl.locationAbbr, cl.defaultTimeZone FROM Visits v\n",
+      "INNER JOIN Locations cl ON cl.locationID = v.locationID\n",
       "AND cl.areaID = ", cities$areaID[city]
     )
   )
@@ -196,11 +198,11 @@ for(city in 1:nrow(cities)){
   )
   vis_loc$firstPhotoDate <- with_tz(
     vis_loc$firstPhotoDate,
-    unique(vis_loc$defaultTimeZone)
+    unique(vis_loc$defaultTimeZone)[1]
   )
   vis_loc$lastPhotoDate<- with_tz(
     vis_loc$lastPhotoDate,
-    unique(vis_loc$defaultTimeZone)
+    unique(vis_loc$defaultTimeZone)[1]
   )
   # Pull in all of the detection data
   response <- try(
@@ -208,7 +210,7 @@ for(city in 1:nrow(cities)){
       paste0(
         "SELECT DISTINCT s.commonName, v.locationID, v.visitID, c.locationAbbr, p.photoDatetime, d.valStatID FROM Photos p \n",
         "INNER JOIN Visits v ON p.visitID=v.visitID AND p.photoDateTime >= v.activeStart AND p.photoDateTime <= v.activeEnd\n",
-        "INNER JOIN CameraLocations c ON (v.locationID=c.locationID)\n",
+        "INNER JOIN Locations c ON (v.locationID=c.locationID)\n",
         "INNER JOIN Detections d ON (p.photoName=d.photoName)",
         "INNER JOIN DetectionSpecies ds ON (d.detectionID=ds.detectionID)\n",
         "INNER JOIN Species s ON (ds.speciesID=s.speciesID)\n",
@@ -222,11 +224,11 @@ for(city in 1:nrow(cities)){
   # Correct the datetime data
   response$photoDatetime <- lubridate::with_tz(
     response$photoDatetime,
-    unique(vis_loc$defaultTimeZone)
+    unique(vis_loc$defaultTimeZone)[1]
   )
   response$photoDatetime <- lubridate::ymd_hms(
     response$photoDatetime,
-    tz = unique(vis_loc$defaultTimeZone)
+    tz = unique(vis_loc$defaultTimeZone)[1]
   )
   # get the species from this city
   city_species <- unique(
@@ -248,14 +250,14 @@ for(city in 1:nrow(cities)){
      response$photoDatetime >= lubridate::ymd_hms(
        paste(
          as.character(buffers$lower[season]), "00:00:00",
-         tz = unique(vis_loc$defaultTimeZone)
+         tz = unique(vis_loc$defaultTimeZone)[1]
         )
       ),]
    tmp <- tmp[
      tmp$photoDatetime <= ymd_hms(
        paste(
          as.character(buffers$upper[season]), "23:59:59",
-         tz = unique(vis_loc$defaultTimeZone)
+         tz = unique(vis_loc$defaultTimeZone)[1]
        )
      ),
    ]
@@ -281,10 +283,10 @@ for(city in 1:nrow(cities)){
        vis_loc$locationAbbr
      )
    )
-   # While we are here we may as well grab the UTMs
+   # While we are here we may as well grab the coordinates
    site_utms <- suppressWarnings(dplyr::left_join(
      data.frame(locationAbbr = sites),
-     vis_loc[,c("locationAbbr", "utmNorth", "utmEast", "utmZone")],
+     vis_loc[,c("locationAbbr", "longitude", "latitude")],
      by = "locationAbbr"
    )) %>%
      distinct
@@ -327,9 +329,8 @@ for(city in 1:nrow(cities)){
      Species = rep(city_species, each = nrow(det_mat)),
      Season = 1,
      Site = rep(site_utms$locationAbbr, length(city_species)),
-     UTMNorth = rep(site_utms$utmNorth, length(city_species)),
-     UTMEast  = rep(site_utms$utmEast, length(city_species)),
-     UTMZone  = rep(site_utms$utmZone, length(city_species))
+     Longitude = rep(site_utms$longitude, length(city_species)),
+     Latitude  = rep(site_utms$latitude, length(city_species))
    )
    to_add <- ncol(det_df)
    # Combine the detection matrix
@@ -377,7 +378,7 @@ for(city in 1:nrow(cities)){
 # The tabulated season folders all start with a leading zero
   season_paths <- list.files(
     paste0(
-      "../uwin-dataset/data_2022-09-15/",
+      "../uwin-dataset/data_2023-04-26/",
       tolower(cities$areaAbbr[city])
     ),
     "0[0-9]?[1-9]_",
