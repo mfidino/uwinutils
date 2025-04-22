@@ -129,7 +129,7 @@ gsutil_delete <- function(images_to_delete = NULL,
   #  selective images
 
     foreach(i = 1:nrow(images_to_delete), .options.snow = opts) %dopar% {
-      system(paste('gsutil -m rm',images_to_delete$filepath[i]))
+      system(paste('gsutil rm',images_to_delete$filepath[i]))
     }
     snow::stopCluster(cl)
   } else {
@@ -144,7 +144,7 @@ gsutil_delete <- function(images_to_delete = NULL,
       row.names = FALSE,
       col.names = FALSE
     )
-    system(paste('cat', my_fp, "| xargs gsutil -m rm "))
+    system(paste('cat', my_fp, "| xargs gsutil rm "))
     file.remove(my_fp)
   }
 }
@@ -174,7 +174,7 @@ gsutil_move <- function(from = NULL,to = NULL){
     # go through each folder and drop, otherwise go through
     #  selective images
     for(i in 1:length(from)){
-      system(paste('gsutil -m mv', from[i], to[i]))
+      system(paste('gsutil mv', from[i], to[i]))
     }
 }
 

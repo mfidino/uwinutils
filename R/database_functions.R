@@ -10,6 +10,8 @@
 #' no arguments but will request for the password to the UWIN database when
 #' a connection is attempted.
 #'
+ #' @param user the name of the user you want to login as. Defaults to 'root'.
+#'
 #' @return If the password is correctly input \code{connect2db} will return
 #' a \code{MySQLConnection} called \code{uwidb.} to the global environment.
 #'
@@ -20,9 +22,9 @@
 #' connect2db()
 #' }
 #' @export
-connect2db <- function(){
+connect2db <- function(user = 'root'){
   uwidb <- dbConnect(MariaDB(),
-            user = 'root',
+            user = user,
             password = rstudioapi::askForPassword(
               prompt = 'Input UWIDB password'
             ),

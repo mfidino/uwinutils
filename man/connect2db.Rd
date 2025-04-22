@@ -4,7 +4,10 @@
 \alias{connect2db}
 \title{Connect to UWIN database}
 \usage{
-connect2db()
+connect2db(user = "root")
+}
+\arguments{
+\item{user}{the name of the user you want to login as. Defaults to 'root'.}
 }
 \value{
 If the password is correctly input \code{connect2db} will return
